@@ -16,6 +16,38 @@ theme_set(ggplot2::theme_classic() + ggplot2::theme(axis.title = element_text(si
 
 #### Functions +++ Computation ####
 
+#' Initializes data object to a node-matrix, simulation or coordinates class
+#' 
+#' @param obj A data.frame containing data about X, Y coordinates, time, and others
+#' @param refcoords A data.frame containing the coordinates of the vertices of the hexagonal lattice
+#' @param class A character, one of: "nodes", "simulation", "coords". Class to convert data to.
+#' @param ... Additional arguments to be passed, such as already computed segments, experiment date...
+#' @TO.BE.ADDED: AVAILABLE ARGUMENTS (date, segments, )
+#' @return Object of the class specified in \code{class}
+init <- function(obj, refcoords, class, ...){
+        if(!class %in% c('nodes', 'simulation', 'coords')){
+                stop('only "nodes", "simulation" or "coords" are currently available classes')
+        }
+        tmp <- list(data = as.data.frame(obj), refcoords = refcoords)
+        args <- list(...)
+        if(length(args) && length(names(args)) && length(args) == length(names(args))){
+                n <- names(args)
+                for(i in seq_along(args)){
+                        tmp[[n[i]]] <- args[[i]]
+                }
+        }
+        
+        # assign radius to compute neighbours
+        class(tmp) <- class
+        if(class == 'nodes' || class == 'coords'){
+                r <- 51
+        } else {
+                r <- 1.01 
+        }
+        tmp$r <- r
+        tmp
+}
+
 #' Computes the pairwise euclidean distance between two sets of coordinates
 #' 
 #' @param A A matrix of dim(N, 2)
@@ -63,6 +95,20 @@ rotate.theta <- function(x, y, theta = pi/2){
      as.data.frame(m)
 }
 
+closest_node <- function(obj){
+        if(!'coords' %in% class(obj)){
+                return(obj)
+        }
+
+        xy <- cbind(obj$data$Xmm, obj$data$Ymm)
+        h <- as.matrix(obj$refcoords)
+        idx <- vapply(seq_len(nrow(xy)), function(i){
+                which.min(pdist(h, t(xy[i, ])))
+        }, integer(1))
+        obj$data$node <- idx
+        obj
+}
+
 #' Checks if a list of points is inside a radius
 #' 
 #' @param x A numeric indicating the x component of the coordinate(s)
@@ -96,7 +142,6 @@ compute_segments <- function(obj){
                                      o = rep(rownames(xy)[i], sum(idx)),
                                      d = rownames(xy)[idx]))
      }
-     
      df
 }
 
@@ -127,6 +172,8 @@ cluster_lengths <- function(x, tau = 10){
 } 
 
 #### Functions +++ Visualization ####
+
+
 #' Creates a point heatmap
 #'
 #' @param obj An object of whatever class (simulation, lattice, coords)
@@ -179,10 +226,6 @@ draw_FoodPatches <- function(obj, add = NULL, ...){
 }
 
 #### Methods ####
-init <- function(obj){
-     UseMethod('init')
-}
-
 get_N <- function(obj){
      UseMethod('get_N')
 }
@@ -191,9 +234,17 @@ connectivity <- function(obj){
      UseMethod('connectivity')
 }
 
-# compute_segments <- function(obj){
-#      UseMethod('compute_segments')
-# }
+node_idx <- function(obj, row){
+        UseMethod('node_idx')
+}
+
+local_cov <- function(obj){
+        UseMethod('local_cov')
+}
+
+get_neighbors <- function(obj, row){
+        UseMethod('get_neighbors')
+}
 
 # returns the coordinates of the input patches.
 ## select one option for table: 'full' (the whole table is being used in the experiment), 

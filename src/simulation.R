@@ -1,23 +1,4 @@
-## Class setter
-setClass('simulation', slots = list(data = 'data.frame',
-                                    params = 'list',
-                                    refcoords = 'data.frame'))
-
-## Class initializer
-init.simulation <- function(obj, ...){
-     tmp <- list(data = obj)
-     args <- list(...)
-     if(length(args) && length(names(args)) && length(args) == length(names(args))){
-          n <- names(args)
-          for(i in seq_along(args)){
-               tmp[[n[i]]] <- args[[i]]
-          }
-     }
-     tmp$r <- 1.01
-     tmp
-}
-
-connectivity <- function(pos){
+connectivity.simulation <- function(pos){
      
      if(length(pos)>0){
           pos <- unique(pos)

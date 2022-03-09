@@ -1,19 +1,70 @@
-## Class setter
-setClass('coords', slots = list(data = 'data.frame',
-                                exp.condition = 'character',
-                                is.average = 'logical',
-                                refcoords = 'data.frame'))
+node_idx.coords <- function(obj, row){
+        m <- cbind(obj$data[row, 'Xmm'],obj$data[row, 'Ymm'])
+        h <- cbind(obj$refcoords[, 1], obj$refcoords[, 2])
+        d <- pdist(h, m, ret.vec = FALSE)
+        idx <- apply(d, 2, which.min)
+        as.integer(rownames(obj$refcoords)[idx])
+}
 
-## Class initializer
+get_neighbors.coords <- function(obj, row){
+        
+        if(!'segments' %in% names(obj)){
+                obj$segments <- compute_segments(obj)
+        }
+        if(sum(grepl('node', colnames(obj$data))) == 0){
+                nodes <- node_idx(obj, row)
+        } else {
+                nodes <- obj$data$node[row]
+        }
+        
+        as.integer(obj$segments$d[obj$segments$o %in% nodes])
+}
 
 
-class(obj) <- 'lattice'
-obj <- new('coords', data = obj, ...)
-obj
-setMethod('nest_boundaries', 'coords', function(obj){
-     obj@nest_boundaries <- ...
-     obj
-})
+local_cov.coords <- function(obj, t = c(50, 5)){
+        # initialize time vectors
+        tvec <- obj$data$Frame
+        t0 <- seq(0, max(obj$data$Frame), t[2])
+        t1 <- t0 + t[1]
+        sq <- lapply(seq_along(t0), function(i){
+                which(tvec > t0[i] & tvec <= t1[i])
+        })
+        
+        # initialize a vector of 0s (covariance)
+        x <- numeric(length(sq))
+        names(sq) <- seq_along(sq)
+        
+        sq <- sq[lapply(sq, length) > 0]
+        idx <- as.integer(names(sq))
+        
+        # calculate covariance for local neighbors
+        y <- vapply(seq_along(sq), function(i){
+                data <- obj$data[sq[[i]], c('Frame', 'node')]
+                s <- obj$segments[obj$segments$o %in% data$node, c('o', 'd')]
+                neighbors <- get_neighbors(obj, sq[[i]])
+                data <- rbind(data, cbind(Frame = NA, node = neighbors))
+                s <- s[s$d %in% data$node, ]
+                t <- table(data)
+                t[t == 0] <- -1
+                z <- cov(t)
+                z <- vapply(seq_len(nrow(s)), function(k){
+                        z[rownames(z) == s[k, 1] , colnames(z) == s[k, 2]]
+                }, numeric(1)) 
+                mean(z, na.rm = T)
+        }, numeric(1))
+        
+        # replace 0s with actual mean covariance
+        x[idx] <- y
+        x[!is.finite(x)] <- 0
+        x
+}
+
+
+
+
+
+
+
 nest_boundaries <- function(){
      tnest <- closest.node(1000,1000)
      bnest <- closest.node(980, 980)
