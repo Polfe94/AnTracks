@@ -59,11 +59,66 @@ local_cov.coords <- function(obj, t = c(50, 5)){
         x
 }
 
+get_N.coords <- function(obj){
+        N <- numeric(length(seq(0, max(obj$data$Frame))))
+        t <- unique(obj$data$Frame)
+        n <- vapply(t, function(k){
+                sum(obj$data$Frame == k)
+        }, numeric(1))
+        
+        N[t] <- n
+        N
+}
+
+get_I.coords <- function(obj){
+        I <- numeric(length(seq(0, max(obj$data$Frame))))
+        t <- unique(obj$data$Frame[obj$data$Crossings != 0])
+        i <- vapply(t, function(k){
+                sum(obj$data$Frame == k & obj$data$Crossings > 0)
+        }, numeric(1))
+        
+        I[t] <- i
+        I
+}
+
+get_foodPatches.coords <- function(obj){
+        m <- get_metainfo(obj$date)
+        p <- get_food_from_metainfo(m)
+        p <- set_foodpatches(p)
+        p
+}
+
+food_detection.coords <- function(obj, r = 7){
+        if(!'food' %in% names(obj)){
+                obj$food <- get_foodPatches(obj)
+        }
+        
+        p <- obj$food
+        vapply()
+}
 
 
-
-
-
+## gives an estimated time of arrival to the food vertices (returns a dataframe)
+## note that the function assumes the time to be ordered
+## need to provide the patch configuration (foodpatches = list of points (vertices of the foodpatches))
+ETAfood <- function(foodpatches, exp, radius = 3.5){
+        exp <- exp[order(exp$Time_sec),]
+        coordinates <- do.call('rbind', foodpatches)
+        positions <- vector(mode = 'list', length = nrow(coordinates))
+        ## take all left positions in the specified radius near the food vertices
+        positions <- apply(
+                coordinates, 1, function(i) exp[which(exp$Xmm >= i[1] - radius &
+                                                              exp$Xmm < i[1] + radius &
+                                                              exp$Ymm >= i[2] - radius &
+                                                              exp$Ymm < i[2] + radius),c('Time_sec','Xmm', 'Ymm')]
+        )
+        names(positions)
+        positions <- positions[lapply(positions, nrow)>0]
+        times <- do.call('rbind', lapply(
+                positions, function(i) i[1,]
+        ))
+        return(times)
+}
 
 nest_boundaries <- function(){
      tnest <- closest.node(1000,1000)

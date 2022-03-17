@@ -230,6 +230,10 @@ get_N <- function(obj){
      UseMethod('get_N')
 }
 
+get_I <- function(obj){
+        UseMethod('get_I')
+}
+
 connectivity <- function(obj){
      UseMethod('connectivity')
 }
@@ -246,89 +250,133 @@ get_neighbors <- function(obj, row){
         UseMethod('get_neighbors')
 }
 
-# returns the coordinates of the input patches.
-## select one option for table: 'full' (the whole table is being used in the experiment), 
-## 'htop' (only the top half is being used), 'hbot' (same for bottom half)
-set.foodpatches <- function(patches, table = 'full'){
-     ## delta x is (X1 - X0) *2 (i.e x1 = 547.69, x0 = 504.38)
-     dx <- 86.62
-     ## delta y is equal to the L of the hexagon (i.e 50 mm)
-     dy <- 50
-     ## initialize list for the starting node and food hexagons
-     startnode <- vector(mode = 'list',length = length(patches))
-     food <- vector(mode = 'list', length = length(patches))
-     
-     
-     # direction to move (in Y axis)
-     operation <- c(-1, -1, 1, 1)
-     
-     # top left and bottom right reference nodes
-     ref_top <- closest.node(c(0,2000))
-     ref_bot <- closest.node(c(2000,0))
-     refs <- rbind.data.frame(ref_top, ref_top, ref_bot, ref_bot)
-     colnames(refs) <- c('x', 'y')
-     
-     # set the starting position
-     if(table == 'full' | table == 'htop'){
-          for(i in 1:length(startnode)){
-               startnode[[i]] <- refs[i, ]
-               startnode[[i]][2] <- startnode[[i]][2] + operation[i] * (ceiling(patches[[i]][1]/2) * dy + floor(patches[[i]][1]/2) * (dy *2))
-               
-               # drag the starting position to the corresponding margin (left or right, determined by operation)
-               if(patches[[i]][1]%%2 == 0){
-                    startnode[[i]][1] <- operation[i]*2000
-               }
-          }
-          # revert the signs of operation for the movement in X axis
-          operation <- -operation
-          # set the starting node to build the 6 vertexes of the hexagon
-          node1 <- c('bl','bl', 'tr', 'tr')
-     }
-     # if we want the half bottom, the thing needs to be tunned a little bit
-     if(table == 'hbot'){
-          for(i in 1:length(startnode)){
-               startnode[[i]] <- refs[i+2, ]
-               startnode[[i]][2] <- startnode[[i]][2] + operation[i+2] * (ceiling(patches[[i]][1]/2) * dy + floor(patches[[i]][1]/2) * (dy *2))
-          }
-          if(patches[[i]][1]%%2 == 0){
-               startnode[[i]][1] <- 2000
-          }
-          node1 <- c('tr', 'tr')
-     }
-     
-     # readjust positions
-     startnode <- lapply(startnode, closest.node)
-     
-     for(n in 1:length(startnode)){
-          
-          startnode[[n]][1] <- startnode[[n]][1] + operation[n] * (patches[[n]][2]-1)*dx
-     }
-     
-     # make sure the positions correspond to a node
-     startnode <- lapply(startnode, closest.node)
-     
-     
-     # acquire vertexes' positions
-     for(x in 1:length(startnode)){
-          if(node1[x] == 'bl'){
-               bl <- startnode[[x]]
-               tl <- hex90[command(bl)$north,]
-               t <- hex90[command(tl)$east,]
-               tr <- hex90[command(t)$east,]
-               br <- hex90[command(tr)$south,]
-               b <- hex90[command(br)$west,]
-          } else if(node1[x] == 'tr'){
-               tr <- startnode[[x]]
-               br <- hex90[command(tr)$south,]
-               b <- hex90[command(br)$west,]
-               bl <- hex90[command(b)$west,]
-               tl <- hex90[command(bl)$north,]
-               t <- hex90[command(tl)$east,]
-          }
-          food[[x]] <- do.call('rbind',
-                               list(bl, tl, t, tr, br, b))
-     }
-     
-     #food <- food[lapply(food, nrow)>0]
-     return(food)
+foodpatches <- function(obj){
+        UseMethod('foodpatches')
+}
+
+get_foodPatches <- function(obj){
+        UseMethod('get_foodPatches')
+}
+
+food_detection <- function(obj){
+        UseMethod('food_detection')
+}
+
+#### +++ Extract meta-information from experiments +++ ####
+
+#' Extracts additional information from experiments (such as patch location)
+#' 
+#' @param spreadsheet A data.frame containing the experiment information
+#' @param expdate A character containing the experiment date
+#' @return A list of length two, with a data.frame containing the
+#' experiment information in the specified dates, both for green and red colony
+get_metainfo <- function(expdate, spreadsheet = exp_spreadsheet){
+
+        exptime <- vapply(expdate, function(i){
+                ifelse(grepl('M', i), 'M', 'T')
+        }, character(1), USE.NAMES = FALSE)
+
+        d <- format(strptime(expdate, '%Y%m%d'), format = '%d/%m/%Y')
+        
+        idx <- vapply(seq_along(expdate), function(i){
+                which(spreadsheet$Date == d[i] & spreadsheet$MATI.TARDA == exptime[i])
+        }, integer(1))
+
+        output <- list(G = spreadsheet[idx, c(1:10, 18:24, 35:46)], # Green colony
+                       R = spreadsheet[idx, c(1:17, 26:34, 44:46)]) # Red colony
+        output
+}
+
+#' Extracts the food location from a metainfo object
+#' 
+#' @param metainfo A data.frame with the metainfo of a single experiment
+#' @return A data.frame with the food patch x and y coordinates
+get_food_from_metainfo <- function(metainfo){
+        
+        patch2df <- function(patch_coord){
+                s <- gsub('[()]', '', patch_coord)
+                s <- strsplit(s, ',')
+                data.frame(x = as.integer(s[[1]][1]), 
+                           y = as.integer(s[[1]][2]))
+        }
+        
+        df <- data.frame(colony = c('G', 'G', 'R', 'R'),
+                         patch = c(1, 2, 1, 2))
+        
+        m = list(GP1 = metainfo$G$P1cord..x.y..2,
+                 GP2 = metainfo$G$P2cord,
+                 RP1 = metainfo$R$P1cord..x.y.,
+                 RP2 = metainfo$R$P1cord..x.y..1)
+        
+        cbind(df, do.call('rbind', 
+                          lapply(m, patch2df)))
+        
+}
+
+foodpatches.top <- function(obj){
+        # hexagon dimension
+        dy <- 50
+        dx <- 86.62
+        ref <- 80 # node index top left
+        
+        start <- as.numeric(hex[ref, ])
+        start[2] <- start[2] - dy
+        pos <- start
+
+        move <- c(-dx / 2, -1.5*dy)
+        
+        for(i in seq_len(obj[1] -1)){
+                pos <- pos + move
+                move[1] <- move[1] * -1
+        }
+        
+        for(i in seq_len(obj[2]-1)){
+                pos[1] <- pos[1] + dx
+        }
+        
+        pos
+}
+
+foodpatches.bot <- function(obj){
+        # hexagon dimension
+        dy <- 50
+        dx <- 86.62
+        ref <- 1161 # node index bottom right
+        
+        start <- as.numeric(hex[ref, ])
+        start[2] <- start[2] + dy
+        pos <- start
+        
+        move <- c(dx / 2, 1.5*dy)
+        
+        for(i in seq_len(obj[1] -1)){
+                pos <- pos + move
+                move[1] <- move[1] * -1
+        }
+        
+        for(i in seq_len(obj[2]-1)){
+                pos[1] <- pos[1] - dx
+        }
+        
+        pos
+}
+
+set_foodpatches <- function(patches){
+        p <- lapply(seq_len(nrow(patches)), function(i){
+                x <- patches[i, ]
+                c <- ifelse(grepl('G', x$colony), 'top', 'bot')
+                x <- c(x$x, x$y)
+                class(x) <- c
+                foodpatches(x)
+        })
+        
+        p <- lapply(p, function(i){
+                k <- vapply(seq_len(nrow(hex)), function(k){
+                        inRadius(hex[k, ], i, r = 55)
+                }, logical(1))
+                hex[k, ]
+        })
+        
+        names(p) <- paste(patches$colony, 'P', patches$patch, sep = '')
+        p
 }
