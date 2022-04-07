@@ -258,7 +258,7 @@ get_foodPatches <- function(obj){
         UseMethod('get_foodPatches')
 }
 
-food_detection <- function(obj){
+food_detection <- function(obj, r){
         UseMethod('food_detection')
 }
 

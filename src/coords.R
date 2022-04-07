@@ -92,9 +92,21 @@ food_detection.coords <- function(obj, r = 7){
         if(!'food' %in% names(obj)){
                 obj$food <- get_foodPatches(obj)
         }
-        
-        p <- obj$food
-        vapply()
+        p <- do.call('rbind', obj$food[1:2]) ## only top
+        if('t' %in% colnames(p)){
+                return(p$t)
+        }
+        xy <- obj$data[order(obj$data$Frame), c('Xmm', 'Ymm', 'Frame')]
+
+        vapply(seq_len(nrow(p)), function(i){
+                bool <- FALSE
+                idx <- 0L
+                while(!bool){
+                        idx <- idx + 1L
+                        bool <- inRadius(p[i, ], xy[idx, c('Xmm', 'Ymm')], r = r)
+                }
+                xy$Frame[idx]
+        }, numeric(1))
 }
 
 
