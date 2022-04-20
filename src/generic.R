@@ -111,15 +111,21 @@ closest_node <- function(obj){
 
 #' Checks if a list of points is inside a radius
 #' 
-#' @param x A numeric indicating the x component of the coordinate(s)
-#' @param y A numeric indicating the y component of the coordinate(s)
+#' @param coords A numeric of length 2 or data frame with 2 columns (x, y)
+#' @param center A numeric indicating  center of the circle
 #' @param r A number indicating the size of the radius (in whatever unit)
-#' @return A vector of TRUE / FALSE of length equal to x and y
-inRadius <- function(x, y, r){
-     x <- c(x, recursive = T)
-     y <- c(y, recursive = T)
-     
-     ((x[1] - y[1]) ^ 2 + (x[2] - y[2]) ^ 2) < (r ^ 2)
+#' @return A vector of TRUE / FALSE of length equal to coords
+inRadius <- function(coords, center, r){
+        if(length(center) != 2){
+                stop('center needs to be an x, y coordinate')
+        }
+        
+        if(is.numeric(coords) && length(coords) == 2){
+                warning('coords is not a data.frame; treating coords as a single x, y coordinate')
+                coords <- t(coords)
+        }
+        ((coords[, 1] - center[1]) ^ 2 + (coords[, 2] - center[2]) ^ 2) < (r ^ 2)
+
 }
 
 #' Computes the "origin - destination" (neighbouring) segments in the hexagonal lattice
@@ -362,6 +368,7 @@ foodpatches.bot <- function(obj){
 }
 
 set_foodpatches <- function(patches){
+        
         p <- lapply(seq_len(nrow(patches)), function(i){
                 x <- patches[i, ]
                 c <- ifelse(grepl('G', x$colony), 'top', 'bot')
@@ -371,10 +378,9 @@ set_foodpatches <- function(patches){
         })
         
         p <- lapply(p, function(i){
-                k <- vapply(seq_len(nrow(hex)), function(k){
-                        inRadius(hex[k, ], i, r = 55)
-                }, logical(1))
-                hex[k, ]
+                k <- inRadius(hex, i, r = 51)
+                h <- hex[k, ]
+                h[chull(h), ]
         })
         
         names(p) <- paste(patches$colony, 'P', patches$patch, sep = '')

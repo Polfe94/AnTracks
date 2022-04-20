@@ -92,45 +92,55 @@ food_detection.coords <- function(obj, r = 7){
         if(!'food' %in% names(obj)){
                 obj$food <- get_foodPatches(obj)
         }
-        p <- do.call('rbind', obj$food[1:2]) ## only top
-        if('t' %in% colnames(p)){
-                return(p$t)
+        food <- do.call('rbind', obj$food[1:2]) ## only top
+        
+        if('t' %in% colnames(food)){
+                return(food$t)
         }
         xy <- obj$data[order(obj$data$Frame), c('Xmm', 'Ymm', 'Frame')]
-
-        vapply(seq_len(nrow(p)), function(i){
-                bool <- FALSE
-                idx <- 0L
-                while(!bool){
-                        idx <- idx + 1L
-                        bool <- inRadius(p[i, ], xy[idx, c('Xmm', 'Ymm')], r = r)
-                }
-                xy$Frame[idx]
-        }, numeric(1))
+        
+        apply(food, 1, function(i){
+                idx <- which(
+                        (xy$Xmm - i[1]) ^ 2 + (xy$Ymm - i[2]) ^ 2 < (r ^ 2)
+                )
+                min(xy$Frame[idx])
+        })
 }
 
-
-## gives an estimated time of arrival to the food vertices (returns a dataframe)
-## note that the function assumes the time to be ordered
-## need to provide the patch configuration (foodpatches = list of points (vertices of the foodpatches))
-ETAfood <- function(foodpatches, exp, radius = 3.5){
-        exp <- exp[order(exp$Time_sec),]
-        coordinates <- do.call('rbind', foodpatches)
-        positions <- vector(mode = 'list', length = nrow(coordinates))
-        ## take all left positions in the specified radius near the food vertices
-        positions <- apply(
-                coordinates, 1, function(i) exp[which(exp$Xmm >= i[1] - radius &
-                                                              exp$Xmm < i[1] + radius &
-                                                              exp$Ymm >= i[2] - radius &
-                                                              exp$Ymm < i[2] + radius),c('Time_sec','Xmm', 'Ymm')]
-        )
-        names(positions)
-        positions <- positions[lapply(positions, nrow)>0]
-        times <- do.call('rbind', lapply(
-                positions, function(i) i[1,]
-        ))
-        return(times)
-}
+# ETAfood <- function(obj, r = 3.5){
+#         food <- do.call('rbind', obj$food)
+#         xy <- obj$data[order(obj$data$Frame), c('Xmm', 'Ymm', 'Frame')]
+#         
+#         f <- apply(food, 1, function(i){
+#                 idx <- which(
+#                         (xy$Xmm - i[1]) ^ 2 + (xy$Ymm - i[2]) ^ 2 < (r ^ 2)
+#                 )
+#                 min(xy$Frame[idx])
+#         })
+# }
+# 
+# 
+# ## gives an estimated time of arrival to the food vertices (returns a dataframe)
+# ## note that the function assumes the time to be ordered
+# ## need to provide the patch configuration (foodpatches = list of points (vertices of the foodpatches))
+# ETAfood <- function(foodpatches, exp, radius = 3.5){
+#         exp <- exp[order(exp$Time_sec),]
+#         coordinates <- do.call('rbind', foodpatches)
+#         positions <- vector(mode = 'list', length = nrow(coordinates))
+#         ## take all left positions in the specified radius near the food vertices
+#         positions <- apply(
+#                 coordinates, 1, function(i) exp[which(exp$Xmm >= i[1] - radius &
+#                                                               exp$Xmm < i[1] + radius &
+#                                                               exp$Ymm >= i[2] - radius &
+#                                                               exp$Ymm < i[2] + radius),c('Time_sec','Xmm', 'Ymm')]
+#         )
+#         names(positions)
+#         positions <- positions[lapply(positions, nrow)>0]
+#         times <- do.call('rbind', lapply(
+#                 positions, function(i) i[1,]
+#         ))
+#         return(times)
+# }
 
 nest_boundaries <- function(){
      tnest <- closest.node(1000,1000)
