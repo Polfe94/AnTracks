@@ -4,10 +4,14 @@ library(viridis)
 library(ggplot2)
 library(jsonlite)
 library(scales) # color ??
+# library(beeswarm) # similar to dotplot
+# library(ggridges) # nice density representation
 # mixOmics #required
 
 #### Common ggplot theme ####
-ggplot <- function(...) ggplot2::ggplot(...) + scale_color_gradient2() + scale_fill_gradient2()
+ggplot <- function(...) ggplot2::ggplot(...) + scale_color_gradient2(low = muted('blue'), 
+                                                                     high = muted('red')) +
+        scale_fill_gradient2(low = muted('blue'), high = muted('red'))
 theme_set(ggplot2::theme_classic() + ggplot2::theme(axis.title = element_text(size  = 15, color = 'black'),
                                                     axis.text = element_text(size = 15, color = 'black'),
                                                     legend.text = element_text(size =15, color = 'black'),
@@ -72,6 +76,16 @@ pdist <- function(A, B, ret.vec = TRUE){
      } else {
           d
      }
+}
+
+#' Normalizes a numeric vector to fit in a given range
+#' 
+#' @param x A numeric vector to be normalized
+#' @param a The lower boundary of the range
+#' @param b The upper boundary of the range
+#' @return The normalized version of x
+norm_range <- function(x, a = -1, b = 1){
+        (b - a) * (x - min(x)) / (max(x) - min(x)) + a
 }
 
 #' Rotates the coordinates to a certain angle
@@ -165,6 +179,25 @@ aggregate_time <- function(t, tau = 10){
      idx
 }
 
+coords2matrix <- function(obj){
+        
+        if(!'coords' %in% class(obj)){
+                stop('Object must be of class "coords"')
+        }
+        if(!'node' %in% colnames(obj$data)){
+                stop('Object must have "node" computed')
+        }
+        n <- obj$data$node
+        t <- obj$data$Frame
+        m <- matrix(data = -1, ncol = length(unique(n)), nrow = max(t))
+        dimnames(m) <- list(seq_len(nrow(m)), unique(n))
+        
+        for(i in seq_along(t)){
+                idx <- which(colnames(m) == n[i])
+                m[t[i], idx] <- 1
+        }
+        m
+}
 
 cluster_lengths <- function(x, tau = 10){
      
@@ -176,6 +209,50 @@ cluster_lengths <- function(x, tau = 10){
      data.frame(t = c(0, as.numeric(names(idx))),
                 k = c(0, output))
 } 
+
+# connectivity <- function(pos){
+#         if(length(pos)>0){
+#                 pos <- unique(pos)
+#                 k_length <- c()
+#                 branch <- c()
+#                 
+#                 while(length(pos)){
+#                         
+#                         current_path <- pos[length(pos)]
+#                         pos <- pos[-length(pos)]
+#                         
+#                         while(length(current_path)){
+#                                 
+#                                 target <- current_path[length(current_path)]
+#                                 neighbors <- get_neighbors(target, hex[, 5:6], r = 1.1)
+#                                 idx <- which(neighbors %in% pos)
+#                                 branch <- c(branch, neighbors[idx])
+#                                 while(length(branch)){
+#                                         
+#                                         current_path <- c(current_path, branch[length(branch)])
+#                                         branch <- branch[-length(branch)]
+#                                         if(current_path[length(current_path)] %in% pos){
+#                                                 pos <- pos[-which(pos == current_path[length(current_path)])]
+#                                         } else {
+#                                                 next
+#                                         }
+#                                         target <- current_path[length(current_path)]
+#                                         neighbors <- get_neighbors(target, hex[, 5:6], r = 1.1)
+#                                         idx <- which(neighbors %in% pos)
+#                                         branch <- c(branch, neighbors[idx])
+#                                 }
+#                                 k_length <- c(k_length, length(current_path))
+#                                 current_path <- c()
+#                                 branch <- c()
+#                         }
+#                 }
+#                 return(mean(k_length))
+#         } else {
+#                 0
+#         }
+# }
+
+
 
 #### Functions +++ Visualization ####
 
@@ -209,8 +286,17 @@ draw_hexagons <- function(obj, add = NULL, z = NULL, ...){
      }
      
      if(!is.null(z)){
+          zmin <- min(z)
+          zmax <- max(z)
+          zmid <- (zmax - zmin) / 2
+          fun <- ecdf(z)
           pl <- pl + geom_segment(data = obj$segments, 
                                   aes(x = x, xend = xend, y = y, yend = yend, color = z), ...)
+                  # scale_color_gradientn(colors = c(muted('blue'), 'white', muted('red')),
+                  #                       values = c(0, fun(0), 1))
+                  # scale_color_gradient(low = 'blue', high = 'red', na.value = 'white')
+                  # scale_color_gradient2(low = muted('blue'), high = muted('red'), midpoint = 0)
+                  # scale_color_gradient2(midpoint = zmid, low = muted('blue'), high = muted('red'))
      } else {
           pl <- pl + geom_segment(data = obj$segments, aes(x = x, xend = xend, y = y, yend = yend), ...)
      }
@@ -240,7 +326,7 @@ get_I <- function(obj){
         UseMethod('get_I')
 }
 
-connectivity <- function(obj){
+connectivity <- function(obj, tau){
      UseMethod('connectivity')
 }
 
@@ -250,6 +336,10 @@ node_idx <- function(obj, row){
 
 local_cov <- function(obj){
         UseMethod('local_cov')
+}
+
+pairwise_cov <- function(obj, t){
+        UseMethod('pairwise_cov')
 }
 
 get_neighbors <- function(obj, row){

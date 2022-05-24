@@ -129,15 +129,15 @@ df <- data.frame(x = 1:21600 /120, y = cumsum(avgI[1:21600])/ max(cumsum(avgI[1:
 
 tiff('G:/research/2022/AnTracks/plots/det_.tiff', width = 2400, height = 1200, res = 180)
 ggplot(data = df) + 
-        geom_bracket(xmin = 0, xmax = mean(det_phase[, 1])/120,
-                     y.position = 0.94, color = 'black',
-                     label = 'Exploration', label.size = 5, size = 0.6, tip.length = 0.02) +
-        geom_bracket(xmin = mean(det_phase[, 1])/120, xmax = mean(det_phase[, 2])/120,
-                     y.position = 1, color = 'black',
-                     label = 'Food collection', label.size = 5, size = 0.6, tip.length = 0.02) +
-        geom_bracket(xmin = mean(det_phase[, 2])/120, xmax = 180,
-                     y.position = 1.05, color = 'black',
-                     label = 'Post-collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        # geom_bracket(xmin = 0, xmax = mean(det_phase[, 1])/120,
+        #              y.position = 0.94, color = 'black',
+        #              label = 'Exploration', label.size = 5, size = 0.6, tip.length = 0.02) +
+        # geom_bracket(xmin = mean(det_phase[, 1])/120, xmax = mean(det_phase[, 2])/120,
+        #              y.position = 1, color = 'black',
+        #              label = 'Food collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        # geom_bracket(xmin = mean(det_phase[, 2])/120, xmax = 180,
+        #              y.position = 1.05, color = 'black',
+        #              label = 'Post-collection', label.size = 5, size = 0.6, tip.length = 0.02) +
         geom_line(aes(x, z / max(z), color = 'N'), size = 1.2)+
         geom_line(aes(x, y, color = 'IC'), size = 2)+
 
@@ -226,12 +226,12 @@ p3N <- vapply(seq_along(sto), function(i){
 
 # plot
 ggplot(data = data.frame(x = c(rep('p1', 9), rep('p2',9), rep('p3', 9)),
-                         y = c(p1N[-2], p2N[-2], p3N[-2]),
+                         y = c(p1N, p2N, p3N),
                          z = rep(seq(0, 40, length.out = 9), 3)), aes(x, y))+
         # geom_violin(trim = FALSE)+
         geom_violin(draw_quantiles = 0.5, trim = FALSE)+
         # geom_boxplot(width = 0.05)+
-        geom_dotplot(binaxis = 'y', stackdir = 'center', aes(x,y, fill = z))+
+        geom_dotplot(binaxis = 'y', stackdir = 'center', aes(x,y))+
         scale_fill_viridis()
 
 ## +++ I +++
@@ -245,15 +245,15 @@ df <- data.frame(x = 1:21600 /120, y = cumsum(avgI[1:21600])/ max(cumsum(avgI[1:
 
 tiff('G:/research/2022/AnTracks/plots/sto_.tiff', width = 2400, height = 1200, res = 180)
 ggplot(data = df) + 
-        geom_bracket(xmin = 0, xmax = mean(sto_phase[, 1])/120,
-                     y.position = 0.94, color = 'black',
-                     label = 'Exploration', label.size = 5, size = 0.6, tip.length = 0.02) +
-        geom_bracket(xmin = mean(sto_phase[, 1])/120, xmax = mean(sto_phase[, 2])/120,
-                     y.position = 1, color = 'black',
-                     label = 'Food collection', label.size = 5, size = 0.6, tip.length = 0.02) +
-        geom_bracket(xmin = mean(sto_phase[, 2])/120, xmax = 180,
-                     y.position = 1.05, color = 'black',
-                     label = 'Post-collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        # geom_bracket(xmin = 0, xmax = mean(sto_phase[, 1])/120,
+        #              y.position = 0.94, color = 'black',
+        #              label = 'Exploration', label.size = 5, size = 0.6, tip.length = 0.02) +
+        # geom_bracket(xmin = mean(sto_phase[, 1])/120, xmax = mean(sto_phase[, 2])/120,
+        #              y.position = 1, color = 'black',
+        #              label = 'Food collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        # geom_bracket(xmin = mean(sto_phase[, 2])/120, xmax = 180,
+        #              y.position = 1.05, color = 'black',
+        #              label = 'Post-collection', label.size = 5, size = 0.6, tip.length = 0.02) +
         geom_line(aes(x, z / max(z), color = 'N'), size = 1.2)+
         geom_line(aes(x, y, color = 'IC'), size = 2)+
         

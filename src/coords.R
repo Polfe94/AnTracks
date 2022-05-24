@@ -59,6 +59,32 @@ local_cov.coords <- function(obj, t = c(50, 5)){
         x
 }
 
+pairwise_cov.coords <- function(obj, t){
+        m <- coords2matrix(obj)
+        m <- m[t, ]
+        
+        mc <- cov(m)
+        z <- numeric(length(det[[1]]$segments$o))
+        s <- det[[1]]$segments[, c('o', 'd')]
+        n <- colnames(mc)
+        for(i in n){
+                idx <- which(s$o == i)
+                sb <- s[idx, ]
+                tmp <- numeric(nrow(sb))
+                for(x in seq_len(nrow(sb))){
+                        r <- mc[n == sb$o[x], n == sb$d[x]]
+                        if(length(r)){
+                                tmp[x] <- r
+                        }
+                }
+                if(length(idx) != length(tmp)){
+                        print(i)
+                }
+                z[idx] <- tmp
+        }
+        z
+}
+
 get_N.coords <- function(obj){
         N <- numeric(length(seq(0, max(obj$data$Frame))))
         t <- unique(obj$data$Frame)
@@ -105,6 +131,74 @@ food_detection.coords <- function(obj, r = 7){
                 )
                 min(xy$Frame[idx])
         })
+}
+
+cluster_lengths <- function(x, tau = 10){
+        
+        idx <- aggregate_time(x$t, tau = tau)
+        output <- vapply(idx, function(i){
+                result <- connectivity(x[i, c('idx')])
+        }, numeric(1))
+        
+        data.frame(t = c(0, as.numeric(names(idx))),
+                   k = c(0, output))
+}
+
+connectivity.coords <- function(obj, tau){
+        
+        data <- obj$data
+        
+        if(!'node' %in% colnames(data)){
+                stop('Prior to connectivity, object must have node computed')
+        }
+        
+        result <- numeric(max(data$Frame))
+        
+        L <- lapply(unique(data$Frame), function(i){
+                idx <- which(data$Frame %in% i:(i+tau))
+                list(Frame = i, Pos = data$node[idx])
+        })
+        
+        for(i in seq_along(L)){
+                
+                pos <- unique(L[[i]]$Pos)
+                k_length <- c()
+                branch <- c()
+                
+                while(length(pos)){
+                        
+                        current_path <- pos[length(pos)]
+                        pos <- pos[-length(pos)]
+                        
+                        while(length(current_path)){
+                                
+                                target <- current_path[length(current_path)]
+                                neighbors <- as.integer(obj$segments$d[obj$segments$o %in% target])
+                                idx <- which(neighbors %in% pos)
+                                branch <- c(branch, neighbors[idx])
+                                while(length(branch)){
+                                        
+                                        current_path <- c(current_path, branch[length(branch)])
+                                        branch <- branch[-length(branch)]
+                                        if(current_path[length(current_path)] %in% pos){
+                                                pos <- pos[-which(pos == current_path[length(current_path)])]
+                                        } else {
+                                                next
+                                        }
+                                        target <- current_path[length(current_path)]
+                                        neighbors <- as.integer(obj$segments$d[obj$segments$o %in% target])
+                                        idx <- which(neighbors %in% pos)
+                                        branch <- c(branch, neighbors[idx])
+                                }
+                                k_length <- c(k_length, length(current_path))
+                                current_path <- c()
+                                branch <- c()
+                        }
+                }
+                result[L[[i]]$Frame] <- mean(k_length)
+        }
+        
+        return(result)
 }
 
 # ETAfood <- function(obj, r = 3.5){
