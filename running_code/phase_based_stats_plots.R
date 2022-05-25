@@ -1,4 +1,5 @@
-exp_condition <- c('det')
+exp_condition <- c('')
+rm(list = ls()[grepl('json', ls())], colony, current_dir, exp_condition, exps, visual)
 source('G:/research/MoveAnts/code/config.R')
 source('C:/Users/POL/Desktop/gants_current/code/dev/dev_functions.R')
 
@@ -37,8 +38,22 @@ det_phase <- t(vapply(det, function(i){
         c(min(x, na.rm = T), max(x, na.rm = T))
 }, numeric(2)))
 
-det_N <- lapply(det, get_N)
-det_I <- lapply(det, get_I)
+# Mean cov
+mcov_det <- vapply(1:10, function(i) mean(det[[i]]$local_cov), numeric(1))
+mcov_t <- lapply(1:10, function(i) seq_along(det[[i]]$local_cov)* 5)
+mcov_phase_det <- lapply(1:3, function(i){
+        vapply(seq_along(det), function(x){
+                if(i == 1){
+                        idx <- which(mcov_t[[x]] <= det_phase[x, 1])
+                        
+                } else if (i == 2){
+                        idx <- which(mcov_t[[x]] > det_phase[x, 1] & mcov_t[[x]] <= det_phase[x, 2])
+                } else {
+                        idx <- which(mcov_t[[x]] > det_phase[x, 2])
+                }
+                mean(det[[x]]$local_cov[idx])
+        }, numeric(1))
+})
 
 # Population and interactions
 for(i in seq_along(det)){
@@ -46,11 +61,28 @@ for(i in seq_along(det)){
         det[[i]]$I <- get_I(det[[i]])
 }
 
-mN <- numeric(0)
-mI <- numeric(0)
+
+p1N <- numeric()
+p2N <- numeric()
+p3N <- numeric()
+p1I <- numeric()
+p2I <- numeric()
+p3I <- numeric()
+mN <- numeric()
+mI <- numeric()
 for(i in seq_along(det)){
         N <- det[[i]]$N
         I <- det[[i]]$I
+        
+        # N
+        p1N <- c(p1N, mean(N[1:(det_phase[i, 1])]))
+        p2N <- c(p2N, mean(N[(det_phase[i, 1] + 1):det_phase[i, 2]]))
+        p3N <- c(p3N, mean(N[(det_phase[i, 2] + 1):length(N)]))
+        
+        # I
+        p1I <- c(p1I, mean(I[1:(det_phase[i, 1])]))
+        p2I <- c(p2I, mean(I[(det_phase[i, 1] + 1):det_phase[i, 2]]))
+        p3I <- c(p3I, mean(I[(det_phase[i, 2] + 1):length(I)]))
         
         if(i > 1){
                 if(length(N) < ncol(mN)){
@@ -71,18 +103,8 @@ for(i in seq_along(det)){
 
 
 ## BOXPLOTS per phase
-## +++ N +++
-p1N <- vapply(seq_along(det), function(i){
-        mean(N[1:(det_phase[i, 1])])
-}, numeric(1))
-p2N <- vapply(seq_along(det), function(i){
-        mean(N[(det_phase[i, 1] + 1):det_phase[i, 2]])
-}, numeric(1))
-p3N <- vapply(seq_along(det), function(i){
-        mean(N[(det_phase[i, 2] + 1):length(N)])
-}, numeric(1))
+# +++ N +++
 
-# plot
 ggplot(data = data.frame(x = c(rep('p1', 10), rep('p2',10), rep('p3', 10)),
                          y = c(p1N, p2N, p3N),
                          z = rep(seq(0, 50, length.out = 10), 3)), aes(x, y))+
@@ -93,15 +115,6 @@ ggplot(data = data.frame(x = c(rep('p1', 10), rep('p2',10), rep('p3', 10)),
         scale_fill_viridis()
 
 ## +++ I +++
-p1I <- vapply(seq_along(det), function(i){
-        mean(I[1:(det_phase[i, 1])])
-}, numeric(1))
-p2I <- vapply(seq_along(det), function(i){
-        mean(I[(det_phase[i, 1] + 1):det_phase[i, 2]])
-}, numeric(1))
-p3I <- vapply(seq_along(det), function(i){
-        mean(I[(det_phase[i, 2] + 1):length(I)])
-}, numeric(1))
 
 # plot
 ggplot(data = data.frame(x = c(rep('p1', 10), rep('p2',10), rep('p3', 10)),
@@ -123,30 +136,30 @@ avgN <- colMeans(mN)
 #         geom_line(aes(x, y))
 
 avgI <- colMeans(mI)
- 
+
 df <- data.frame(x = 1:21600 /120, y = cumsum(avgI[1:21600])/ max(cumsum(avgI[1:21600])),
-           z = as.numeric(smooth(avgN[1:21600]), twiceit = T))
+                 z = as.numeric(smooth(avgN[1:21600]), twiceit = T))
 
 tiff('G:/research/2022/AnTracks/plots/det_.tiff', width = 2400, height = 1200, res = 180)
 ggplot(data = df) + 
-        # geom_bracket(xmin = 0, xmax = mean(det_phase[, 1])/120,
-        #              y.position = 0.94, color = 'black',
-        #              label = 'Exploration', label.size = 5, size = 0.6, tip.length = 0.02) +
-        # geom_bracket(xmin = mean(det_phase[, 1])/120, xmax = mean(det_phase[, 2])/120,
-        #              y.position = 1, color = 'black',
-        #              label = 'Food collection', label.size = 5, size = 0.6, tip.length = 0.02) +
-        # geom_bracket(xmin = mean(det_phase[, 2])/120, xmax = 180,
-        #              y.position = 1.05, color = 'black',
-        #              label = 'Post-collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_bracket(xmin = 0, xmax = mean(det_phase[, 1])/120,
+                     y.position = 0.94, color = 'black',
+                     label = 'Exploration', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_bracket(xmin = mean(det_phase[, 1])/120, xmax = mean(det_phase[, 2])/120,
+                     y.position = 1, color = 'black',
+                     label = 'Food collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_bracket(xmin = mean(det_phase[, 2])/120, xmax = 180,
+                     y.position = 1.05, color = 'black',
+                     label = 'Post-collection', label.size = 5, size = 0.6, tip.length = 0.02) +
         geom_line(aes(x, z / max(z), color = 'N'), size = 1.2)+
         geom_line(aes(x, y, color = 'IC'), size = 2)+
-
+        
         scale_y_continuous('Cumulated Interactions (IC)', limits = c(0, 30/max(avgN[1:21600])), 
                            breaks = seq(0,30/max(avgN[1:21600]), length.out = 9),
                            labels = seq(0, 2000, 250),
                            sec.axis = sec_axis(~ ., 
-                                                breaks = seq(0, 30/max(avgN[1:21600]), length.out = 7),
-                           labels = seq(0, 30, 5), name = 'Population (N)'))+
+                                               breaks = seq(0, 30/max(avgN[1:21600]), length.out = 7),
+                                               labels = seq(0, 30, 5), name = 'Population (N)'))+
         scale_x_continuous('Time (min)', breaks = seq(0, 180, 20))+
         scale_color_manual('', values = c('N' = viridis(1, begin= 0.25, end = 0.25),
                                           'IC' = viridis(1, begin= 0.7, end = 0.7)))+
@@ -179,17 +192,51 @@ sto_phase <- t(vapply(sto, function(i){
         c(min(x, na.rm = T), max(x, na.rm = T))
 }, numeric(2)))
 
+# Mean cov
+mcov_sto <- vapply(1:10, function(i) mean(sto[[i]]$local_cov), numeric(1))
+mcov_sto <- mcov_sto[-2]
+mcov_t <- lapply(seq_along(sto), function(i) seq_along(sto[[i]]$local_cov)* 5)
+mcov_phase_sto <- lapply(1:3, function(i){
+        vapply(c(1, 3:10), function(x){
+                if(i == 1){
+                        idx <- which(mcov_t[[x]] <= sto_phase[x, 1])
+                        
+                } else if (i == 2){
+                        idx <- which(mcov_t[[x]] > sto_phase[x, 1] & mcov_t[[x]] <= sto_phase[x, 2])
+                } else {
+                        idx <- which(mcov_t[[x]] > sto_phase[x, 2])
+                }
+                mean(sto[[x]]$local_cov[idx])
+        }, numeric(1))
+})
+
 # Population and interactions
 for(i in seq_along(sto)){
         sto[[i]]$N <- get_N(sto[[i]])
         sto[[i]]$I <- get_I(sto[[i]])
 }
 
-mN <- numeric(0)
-mI <- numeric(0)
+p1N <- numeric()
+p2N <- numeric()
+p3N <- numeric()
+p1I <- numeric()
+p2I <- numeric()
+p3I <- numeric()
+mN <- numeric()
+mI <- numeric()
 for(i in seq_along(sto)){
         N <- sto[[i]]$N
         I <- sto[[i]]$I
+        
+        # N
+        p1N <- c(p1N, mean(N[1:(sto_phase[i, 1])]))
+        p2N <- c(p2N, mean(N[(sto_phase[i, 1] + 1):sto_phase[i, 2]]))
+        p3N <- c(p3N, mean(N[(sto_phase[i, 2] + 1):length(N)]))
+        
+        # I
+        p1I <- c(p1I, mean(I[1:(sto_phase[i, 1])]))
+        p2I <- c(p2I, mean(I[(sto_phase[i, 1] + 1):sto_phase[i, 2]]))
+        p3I <- c(p3I, mean(I[(sto_phase[i, 2] + 1):length(I)]))
         
         if(i > 1){
                 if(length(N) < ncol(mN)){
@@ -208,52 +255,48 @@ for(i in seq_along(sto)){
         mI <- rbind(mI, I)
 }
 
-
 ## BOXPLOTS per phase
 ## +++ N +++
-mN <- mN[-2, ]
-mI <- mI[-2, ]
 
-p1N <- vapply(seq_along(sto), function(i){
-        mean(N[1:(sto_phase[i, 1])])
-}, numeric(1))
-p2N <- vapply(seq_along(sto), function(i){
-        mean(N[(sto_phase[i, 1] + 1):sto_phase[i, 2]])
-}, numeric(1))
-p3N <- vapply(seq_along(sto), function(i){
-        mean(N[(sto_phase[i, 2] + 1):length(N)])
-}, numeric(1))
-
-# plot
 ggplot(data = data.frame(x = c(rep('p1', 9), rep('p2',9), rep('p3', 9)),
-                         y = c(p1N, p2N, p3N),
+                         y = c(p1N[-2], p2N[-2], p3N[-2]),
                          z = rep(seq(0, 40, length.out = 9), 3)), aes(x, y))+
         # geom_violin(trim = FALSE)+
-        geom_violin(draw_quantiles = 0.5, trim = FALSE)+
-        # geom_boxplot(width = 0.05)+
-        geom_dotplot(binaxis = 'y', stackdir = 'center', aes(x,y))+
+        # geom_violin(draw_quantiles = 0.5, trim = FALSE)+
+        geom_boxplot()+
+        geom_dotplot(binaxis = 'y', stackdir = 'center', aes(x,y, fill = z))+
         scale_fill_viridis()
 
 ## +++ I +++
 
+ggplot(data = data.frame(x = c(rep('p1', 9), rep('p2',9), rep('p3', 9)),
+                         y = c(p1I[-2], p2I[-2], p3I[-2]),
+                         z = rep(seq(0, 40, length.out = 9), 3)), aes(x, y))+
+        # geom_violin(trim = FALSE)+
+        # geom_violin(draw_quantiles = 0.5, trim = FALSE)+
+        geom_boxplot()+
+        geom_dotplot(binaxis = 'y', stackdir = 'center', aes(x,y, fill = z))+
+        scale_fill_viridis()
 
-avgN <- colMeans(mN)
-avgI <- colMeans(mI)
+
+
+avgN <- colMeans(mN[-2, ])
+avgI <- colMeans(mI[-2, ])
 
 df <- data.frame(x = 1:21600 /120, y = cumsum(avgI[1:21600])/ max(cumsum(avgI[1:21600])),
                  z = as.numeric(smooth(avgN[1:21600]), twiceit = T))
 
 tiff('G:/research/2022/AnTracks/plots/sto_.tiff', width = 2400, height = 1200, res = 180)
 ggplot(data = df) + 
-        # geom_bracket(xmin = 0, xmax = mean(sto_phase[, 1])/120,
-        #              y.position = 0.94, color = 'black',
-        #              label = 'Exploration', label.size = 5, size = 0.6, tip.length = 0.02) +
-        # geom_bracket(xmin = mean(sto_phase[, 1])/120, xmax = mean(sto_phase[, 2])/120,
-        #              y.position = 1, color = 'black',
-        #              label = 'Food collection', label.size = 5, size = 0.6, tip.length = 0.02) +
-        # geom_bracket(xmin = mean(sto_phase[, 2])/120, xmax = 180,
-        #              y.position = 1.05, color = 'black',
-        #              label = 'Post-collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_bracket(xmin = 0, xmax = mean(sto_phase[, 1])/120,
+                     y.position = 0.94, color = 'black',
+                     label = 'Exploration', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_bracket(xmin = mean(sto_phase[, 1])/120, xmax = mean(sto_phase[, 2])/120,
+                     y.position = 1, color = 'black',
+                     label = 'Food collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_bracket(xmin = mean(sto_phase[, 2])/120, xmax = 180,
+                     y.position = 1.05, color = 'black',
+                     label = 'Post-collection', label.size = 5, size = 0.6, tip.length = 0.02) +
         geom_line(aes(x, z / max(z), color = 'N'), size = 1.2)+
         geom_line(aes(x, y, color = 'IC'), size = 2)+
         
