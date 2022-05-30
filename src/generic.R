@@ -1,8 +1,10 @@
 #### Libraries ####
 library(parallel)
 library(viridis)
+library(gridExtra)
 library(ggplot2)
 library(jsonlite)
+library(ggnewscale)
 library(scales) # color ??
 # library(beeswarm) # similar to dotplot
 # library(ggridges) # nice density representation
@@ -179,6 +181,10 @@ aggregate_time <- function(t, tau = 10){
      idx
 }
 
+#' Transforms an object of class coords to an object of class nodes
+#' 
+#' @param obj An object of class coords
+#' @return An object of class nodes
 coords2matrix <- function(obj){
         
         if(!'coords' %in% class(obj)){
@@ -196,6 +202,7 @@ coords2matrix <- function(obj){
                 idx <- which(colnames(m) == n[i])
                 m[t[i], idx] <- 1
         }
+        class(m) <- 'nodes'
         m
 }
 
@@ -210,60 +217,7 @@ cluster_lengths <- function(x, tau = 10){
                 k = c(0, output))
 } 
 
-# connectivity <- function(pos){
-#         if(length(pos)>0){
-#                 pos <- unique(pos)
-#                 k_length <- c()
-#                 branch <- c()
-#                 
-#                 while(length(pos)){
-#                         
-#                         current_path <- pos[length(pos)]
-#                         pos <- pos[-length(pos)]
-#                         
-#                         while(length(current_path)){
-#                                 
-#                                 target <- current_path[length(current_path)]
-#                                 neighbors <- get_neighbors(target, hex[, 5:6], r = 1.1)
-#                                 idx <- which(neighbors %in% pos)
-#                                 branch <- c(branch, neighbors[idx])
-#                                 while(length(branch)){
-#                                         
-#                                         current_path <- c(current_path, branch[length(branch)])
-#                                         branch <- branch[-length(branch)]
-#                                         if(current_path[length(current_path)] %in% pos){
-#                                                 pos <- pos[-which(pos == current_path[length(current_path)])]
-#                                         } else {
-#                                                 next
-#                                         }
-#                                         target <- current_path[length(current_path)]
-#                                         neighbors <- get_neighbors(target, hex[, 5:6], r = 1.1)
-#                                         idx <- which(neighbors %in% pos)
-#                                         branch <- c(branch, neighbors[idx])
-#                                 }
-#                                 k_length <- c(k_length, length(current_path))
-#                                 current_path <- c()
-#                                 branch <- c()
-#                         }
-#                 }
-#                 return(mean(k_length))
-#         } else {
-#                 0
-#         }
-# }
-
-
-
 #### Functions +++ Visualization ####
-
-
-#' Creates a point heatmap
-#'
-#' @param obj An object of whatever class (simulation, lattice, coords)
-#' @param z A numeric vector of values 
-heatmap <- function(obj, z, add = NULL, ...){
-     
-}
 
 #' Draws the hexagonal lattice
 #' 
@@ -286,17 +240,8 @@ draw_hexagons <- function(obj, add = NULL, z = NULL, ...){
      }
      
      if(!is.null(z)){
-          zmin <- min(z)
-          zmax <- max(z)
-          zmid <- (zmax - zmin) / 2
-          fun <- ecdf(z)
           pl <- pl + geom_segment(data = obj$segments, 
                                   aes(x = x, xend = xend, y = y, yend = yend, color = z), ...)
-                  # scale_color_gradientn(colors = c(muted('blue'), 'white', muted('red')),
-                  #                       values = c(0, fun(0), 1))
-                  # scale_color_gradient(low = 'blue', high = 'red', na.value = 'white')
-                  # scale_color_gradient2(low = muted('blue'), high = muted('red'), midpoint = 0)
-                  # scale_color_gradient2(midpoint = zmid, low = muted('blue'), high = muted('red'))
      } else {
           pl <- pl + geom_segment(data = obj$segments, aes(x = x, xend = xend, y = y, yend = yend), ...)
      }
@@ -304,17 +249,33 @@ draw_hexagons <- function(obj, add = NULL, z = NULL, ...){
                                         axis.line = element_blank())
 }
 
-
+#' Draws the food patches
+#' 
+#' @param obj An object of whatever class (coords, lattice, simulation)
+#' @param add Either NULL or a ggplot object
+#' @param ... Additional parameters to be passed to ggplot (color, size, alpha ...)
+#' @return A ggplot object drawing the food patches on top of whatever (if any)
+#' layer is passed to the argument add.
 draw_FoodPatches <- function(obj, add = NULL, ...){
-     if(is.null(add)){
-          add <- ggplot()
-     }
-     
-     for(i in seq_along(obj$food)){
-          add <- add + geom_polygon(data = obj$food[[i]], aes(x, y), ...) +
-               xlab('') + ylab('')
-     }
-     add
+        if(is.null(add)){
+                add <- ggplot()
+        }
+        
+        if(all('coords' %in% sapply(obj, class))){
+                for(x in seq_along(obj)){
+                        tmp <- obj[[x]]
+                        for(i in seq_along(tmp$food)){
+                                add <- add + geom_polygon(data = tmp$food[[i]], aes(x, y), ...) +
+                                        xlab('') + ylab('')
+                        }
+                }
+        } else {
+                for(i in seq_along(obj$food)){
+                        add <- add + geom_polygon(data = obj$food[[i]], aes(x, y), ...) +
+                                xlab('') + ylab('')
+                }
+        }
+        add
 }
 
 #### Methods ####

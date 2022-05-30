@@ -101,6 +101,8 @@ for(i in seq_along(det)){
         mI <- rbind(mI, I)
 }
 
+det_phases <- list(N = list(p1N = p1N, p2N = p2N, p3N = p3N),
+                   I = list(p1I = p1I, p2I = p2I, p3I = p3I))
 
 ## BOXPLOTS per phase
 # +++ N +++
@@ -124,7 +126,7 @@ ggplot(data = data.frame(x = c(rep('p1', 10), rep('p2',10), rep('p3', 10)),
         geom_dotplot(binaxis = 'y', stackdir = 'center')
 
 
-avgN <- colMeans(mN)
+avgN_det <- colMeans(mN)
 # semN <- apply(mN, 2, function(i){
 #         sd(i) / sqrt(length(i))
 # })
@@ -135,10 +137,10 @@ avgN <- colMeans(mN)
 #         geom_errorbar(aes(x = x, ymin = y - sem, ymax = y + sem), alpha = 0.1, color = 'grey80')+
 #         geom_line(aes(x, y))
 
-avgI <- colMeans(mI)
+avgI_det <- colMeans(mI)
 
-df <- data.frame(x = 1:21600 /120, y = cumsum(avgI[1:21600])/ max(cumsum(avgI[1:21600])),
-                 z = as.numeric(smooth(avgN[1:21600]), twiceit = T))
+df <- data.frame(x = 1:21600 /120, y = cumsum(avgI_det[1:21600])/ max(cumsum(avgI_det[1:21600])),
+                 z = as.numeric(smooth(avgN_det[1:21600]), twiceit = T))
 
 tiff('G:/research/2022/AnTracks/plots/det_.tiff', width = 2400, height = 1200, res = 180)
 ggplot(data = df) + 
@@ -179,7 +181,7 @@ for(i in seq_along(sto)){
 }
 
 for(i in seq_along(sto)){
-        food <- get_foodPatches(sto[[1]])
+        food <- get_foodPatches(sto[[i]])
         sto[[i]]$food <- food[1:2]
 }
 
@@ -255,33 +257,30 @@ for(i in seq_along(sto)){
         mI <- rbind(mI, I)
 }
 
+sto_phases <- list(N = list(p1N = p1N[-2], p2N = p2N[-2], p3N = p3N[-2]),
+                   I = list(p1I = p1I[-2], p2I = p2I[-2], p3I = p3I[-2]))
+
 ## BOXPLOTS per phase
 ## +++ N +++
-
 ggplot(data = data.frame(x = c(rep('p1', 9), rep('p2',9), rep('p3', 9)),
                          y = c(p1N[-2], p2N[-2], p3N[-2]),
                          z = rep(seq(0, 40, length.out = 9), 3)), aes(x, y))+
-        # geom_violin(trim = FALSE)+
-        # geom_violin(draw_quantiles = 0.5, trim = FALSE)+
         geom_boxplot()+
         geom_dotplot(binaxis = 'y', stackdir = 'center', aes(x,y, fill = z))+
         scale_fill_viridis()
 
 ## +++ I +++
-
 ggplot(data = data.frame(x = c(rep('p1', 9), rep('p2',9), rep('p3', 9)),
                          y = c(p1I[-2], p2I[-2], p3I[-2]),
                          z = rep(seq(0, 40, length.out = 9), 3)), aes(x, y))+
-        # geom_violin(trim = FALSE)+
-        # geom_violin(draw_quantiles = 0.5, trim = FALSE)+
         geom_boxplot()+
         geom_dotplot(binaxis = 'y', stackdir = 'center', aes(x,y, fill = z))+
         scale_fill_viridis()
 
 
 
-avgN <- colMeans(mN[-2, ])
-avgI <- colMeans(mI[-2, ])
+avgN_sto <- colMeans(mN[-2, ])
+avgI_sto <- colMeans(mI[-2, ])
 
 df <- data.frame(x = 1:21600 /120, y = cumsum(avgI[1:21600])/ max(cumsum(avgI[1:21600])),
                  z = as.numeric(smooth(avgN[1:21600]), twiceit = T))
@@ -313,3 +312,96 @@ ggplot(data = df) +
         theme(axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
               axis.title.y.right =  element_text(margin = margin(0,0, 0, 10)))
 dev.off()
+
+
+####### DET AND STO PLOTS COMBINED #######
+library(ggnewscale)
+
+## N
+a <- ggplot(data = data.frame(x = substr(names(c(do.call('c', det_phases$N),do.call('c', sto_phases$N))), 2,2),
+                         y = c(do.call('c', det_phases$N),do.call('c', sto_phases$N)),
+                         z = c(rep('Determinist', 30), rep('Stochastic', 27))), aes(x, y))+
+
+        geom_boxplot(aes(fill = factor(z)), width = 0.9, show.legend = F)+ 
+        scale_fill_manual('', values = c('white', 'grey70'))+
+        new_scale('fill')+ 
+        scale_x_discrete('', breaks = c(1, 2, 3), labels = c('Exploration', 'Food collection', 'Post-collection')) + 
+        scale_y_continuous('Population size', breaks = seq(0, 30, length.out = 7))+
+        geom_dotplot(binaxis = 'y', stackdir = 'center', binwidth = 0.05, position = 'dodge',
+                     dotsize = 7.5, aes(fill = factor(z)))+
+        scale_fill_manual('Experiment condition', values = c('black', 'black'))+
+        guides(fill = guide_legend(override.aes = list(fill = c('white', 'grey70'))))
+
+## I
+b <- ggplot(data = data.frame(x = substr(names(c(do.call('c', det_phases$I),do.call('c', sto_phases$I))), 2,2),
+                         y = c(do.call('c', det_phases$I),do.call('c', sto_phases$I)),
+                         z = c(rep('Determinist', 30), rep('Stochastic', 27))), aes(x, y))+
+        geom_boxplot(aes(fill = factor(z)), width = 0.9, show.legend = F)+ 
+        scale_fill_manual('', values = c('white', 'grey70'))+
+        new_scale('fill')+
+        scale_y_continuous('Interactions', breaks = seq(0, 0.25, length.out = 6), limits = c(0, 0.25)) +
+        scale_x_discrete('', breaks = c(1, 2, 3), labels = c('Exploration', 'Food collection', 'Post-collection')) + 
+        geom_dotplot(binaxis = 'y', stackdir = 'center', binwidth = 0.005, position = 'dodge',
+                     dotsize = 0.75, aes(fill = factor(z)))+
+        scale_fill_manual('Experiment condition', values = c('black', 'black'))+
+        guides(fill = guide_legend(override.aes = list(fill = c('white', 'grey70'))))
+
+c <- ggplot(data = data.frame(x = 1:21600 /120, y = norm_range(cumsum(avgI_det[1:21600]), a = 0, b = 1),
+                              z = norm_range(as.numeric(smooth(avgN_det[1:21600]), twiceit = T), a = 0, b = 1))) + 
+        geom_bracket(xmin = 0, xmax = mean(det_phase[, 1])/120,
+                     y.position = 0.94, color = 'black',
+                     label = 'Exploration', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_bracket(xmin = mean(det_phase[, 1])/120, xmax = mean(det_phase[, 2])/120,
+                     y.position = 1.02, color = 'black',
+                     label = 'Food collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_bracket(xmin = mean(det_phase[, 2])/120, xmax = 180,
+                     y.position = 1.1, color = 'black',
+                     label = 'Post-collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_line(aes(x, z / max(z), color = 'N'), size = 1.2)+
+        geom_line(aes(x, y, color = 'IC'), size = 2)+
+        
+        scale_y_continuous('Cumulated Interactions (IC)', limits = c(0, 1.15), 
+                           breaks = seq(0, 2000/max(cumsum(avgI_det[1:21600])), length.out = 9),
+                           labels = seq(0, 2000, 250),
+                           sec.axis = sec_axis(~ ., 
+                                               breaks = seq(0, 2000/max(cumsum(avgI_det[1:21600])), length.out = 7),
+                                               labels = seq(0, 30, 5), name = 'Population (N)'))+
+        scale_x_continuous('Time (min)', breaks = seq(0, 180, 20))+
+        scale_color_manual('', values = c('N' = viridis(1, begin= 0.25, end = 0.25),
+                                          'IC' = viridis(1, begin= 0.7, end = 0.7)))+
+        guides(color = guide_legend(override.aes = list(size = 3)))+
+        theme(axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
+              axis.title.y.right =  element_text(margin = margin(0,0, 0, 10)))
+
+
+d <- ggplot(data = data.frame(x = 1:21600 /120, y = norm_range(cumsum(avgI_sto[1:21600]), a = 0, b = 1),
+                              z = norm_range(as.numeric(smooth(avgN_sto[1:21600]), twiceit = T), a = 0, b = 1))) + 
+        geom_bracket(xmin = 0, xmax = mean(sto_phase[, 1])/120,
+                     y.position = 0.94, color = 'black',
+                     label = 'Exploration', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_bracket(xmin = mean(sto_phase[, 1])/120, xmax = mean(sto_phase[, 2])/120,
+                     y.position = 1.02, color = 'black',
+                     label = 'Food collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_bracket(xmin = mean(sto_phase[, 2])/120, xmax = 180,
+                     y.position = 1.1, color = 'black',
+                     label = 'Post-collection', label.size = 5, size = 0.6, tip.length = 0.02) +
+        geom_line(aes(x, z / max(z), color = 'N'), size = 1.2)+
+        geom_line(aes(x, y, color = 'IC'), size = 2)+
+        
+        scale_y_continuous('Cumulated Interactions (IC)', limits = c(0, 1.15), 
+                           breaks = seq(0, 1000/ max(cumsum(avgI_sto)), length.out = 9),
+                           labels = seq(0, 1000, 125),
+                           sec.axis = sec_axis(~ ., 
+                                               breaks = seq(0, 1, length.out = 8),
+                                               labels = seq(0, 35, 5), name = 'Population (N)'))+
+        scale_x_continuous('Time (min)', breaks = seq(0, 180, 20))+
+        scale_color_manual('', values = c('N' = viridis(1, begin= 0.25, end = 0.25),
+                                          'IC' = viridis(1, begin= 0.7, end = 0.7)))+
+        guides(color = guide_legend(override.aes = list(size = 3)))+
+        theme(axis.title.y = element_text(margin = margin(0, 10, 0, 0)),
+              axis.title.y.right =  element_text(margin = margin(0,0, 0, 10)))
+
+
+grid.arrange(a, b, c, d)
+# grid.arrange(ggpubr::ggarrange(a, b, common.legend = T, legend = 'right'),
+#              ggpubr::ggarrange(c, d, common.legend = T, legend = 'right'))

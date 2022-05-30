@@ -1,5 +1,5 @@
 exp_condition <- c('')
-visual <- F
+
 source('~/research/gAnts/code/config.R')
 source('~/gants_current/code/dev/dev_functions.R')
 
@@ -13,9 +13,8 @@ source('~/research/2022/ANTS/AnTracks/src/coords.R')
 load('/home/polfer/research/2022/ANTS/AnTracks/results/sto_coords.RData')
 load('/home/polfer/research/2022/ANTS/AnTracks/results/det_coords.RData')
 
+rm(list = ls()[grepl('json', ls())], visual, colony, current_dir, dirL, exp_condition, exps, conditionL)
 
-m <- coords2matrix(det[[1]])
-library(gridExtra)
 ########## DETS +++ ##########
 
 DET_zp1 <- vector('list', length(det))
@@ -42,27 +41,31 @@ dZp1[dZp1 > 0] <- norm_range(dZp1[dZp1 > 0], a = .Machine$double.eps, b = 1)
 dZp2 <- apply(do.call('rbind', DET_zp2), 2, mean)
 dZp2[dZp2 < 0] <- norm_range(dZp2[dZp2 < 0], a = -1, b = -.Machine$double.eps)
 dZp2[dZp2 > 0] <- norm_range(dZp2[dZp2 > 0], a = .Machine$double.eps, b = 1)
-dZp3 <- apply(do.call('rbind', DET_zp2), 2, mean)
+dZp3 <- apply(do.call('rbind', DET_zp3), 2, mean)
 dZp3[dZp3 < 0] <- norm_range(dZp3[dZp3 < 0], a = -1, b = -.Machine$double.eps)
 dZp3[dZp3 > 0] <- norm_range(dZp3[dZp3 > 0], a = .Machine$double.eps, b = 1)
 
 # draw_hexagons(det[[1]], z = z, add = draw_hexagons(det[[1]], size = 2.3, color = 'black'), size = 2)
-library(gridExtra)
-dp1 <- draw_hexagons(det[[1]], z = dZp1, add = draw_hexagons(det[[1]], size = 3, color = 'black'),
-                     size = 2.7, show.legend = F) + theme(aspect.ratio = 0.5)
-dp2 <- draw_hexagons(det[[1]], z = dZp2, add = draw_hexagons(det[[1]], size = 3, color = 'black'),
-                     size = 2.7, show.legend = F) + theme(aspect.ratio = 0.5)
-dp3 <- draw_hexagons(det[[1]], z = dZp3, add = draw_hexagons(det[[1]], size = 3, color = 'black'),
-                     size = 2.7, show.legend = F) + theme(aspect.ratio = 0.5)
+dp1 <- draw_hexagons(det[[1]], z = dZp1, add = draw_hexagons(det[[1]], size = 1.8, color = 'black',
+                                                             add = draw_FoodPatches(det[[1]])),
+                     size = 1.6, show.legend = F)+ theme_void() + 
+        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
+dp2 <- draw_hexagons(det[[1]], z = dZp2, add = draw_hexagons(det[[1]], size = 1.8, color = 'black',
+                                                             add = draw_FoodPatches(det[[1]])),
+                     size = 1.6, show.legend = F)+ theme_void() + 
+        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
+dp3 <- draw_hexagons(det[[1]], z = dZp3, add = draw_hexagons(det[[1]], size = 1.8, color = 'black',
+                                                             add = draw_FoodPatches(det[[1]])),
+                     size = 1.6, show.legend = F)+theme_void() + 
+        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
 grid.arrange(dp1,dp2,dp3,nrow = 3, ncol = 1)
 
 ########## STOS +++ ##########
-# sto <- sto[-2]
-
 sto_phase <- t(vapply(sto, function(i){
         x <- food_detection(i)
         c(min(x, na.rm = T), max(x, na.rm = T))
 }, numeric(2)))
+
 
 STO_zp1 <- vector('list', length(sto))
 STO_zp2 <- vector('list', length(sto))
@@ -78,28 +81,38 @@ for(i in seq_along(sto)){
      STO_zp3[[i]] <- pairwise_cov(sto[[i]], t)
 }
 
-sZp1 <- apply(do.call('rbind', STO_zp1), 2, mean)
+sZp1 <- apply(do.call('rbind', STO_zp1[-2]), 2, mean)
 sZp1[sZp1 < 0] <- norm_range(sZp1[sZp1 < 0], a = -1, b = -.Machine$double.eps)
 sZp1[sZp1 > 0] <- norm_range(sZp1[sZp1 > 0], a = .Machine$double.eps, b = 1)
-sZp2 <- apply(do.call('rbind', STO_zp2), 2, mean)
+sZp2 <- apply(do.call('rbind', STO_zp2[-2]), 2, mean)
 sZp2[sZp2 < 0] <- norm_range(sZp2[sZp2 < 0], a = -1, b = -.Machine$double.eps)
 sZp2[sZp2 > 0] <- norm_range(sZp2[sZp2 > 0], a = .Machine$double.eps, b = 1)
-sZp3 <- apply(do.call('rbind', STO_zp3), 2, mean)
+sZp3 <- apply(do.call('rbind', STO_zp3[-2]), 2, mean)
 sZp3[sZp3 < 0] <- norm_range(sZp3[sZp3 < 0], a = -1, b = -.Machine$double.eps)
 sZp3[sZp3 > 0] <- norm_range(sZp3[sZp3 > 0], a = .Machine$double.eps, b = 1)
 
 # draw_hexagons(sto[[1]], z = z, add = draw_hexagons(sto[[1]], size = 2.3, color = 'black'), size = 2)
 
-sp1 <- draw_hexagons(sto[[1]], z = sZp1, add = draw_hexagons(sto[[1]], size = 3, color = 'black'),
-                     size = 2.7, show.legend = F) + theme(aspect.ratio = 0.5)
-sp2 <- draw_hexagons(sto[[1]], z = sZp2, add = draw_hexagons(sto[[1]], size = 3, color = 'black'),
-                     size = 2.7, show.legend = F) + theme(aspect.ratio = 0.5)
-sp3 <- draw_hexagons(sto[[1]], z = sZp3, add = draw_hexagons(sto[[1]], size = 3, color = 'black'),
-                     size = 2.7, show.legend = F) + theme(aspect.ratio = 0.5)
+sp1 <- draw_hexagons(sto[[1]], z = sZp1, add = draw_hexagons(sto[[1]], size = 1.8, color = 'black',
+                                                             add = draw_FoodPatches(sto[-2])),
+                     size = 1.6, show.legend = F) + theme_void()+ 
+        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
+        
+sp2 <- draw_hexagons(sto[[1]], z = sZp2, add = draw_hexagons(sto[[1]], size = 1.8, color = 'black',
+                                                             add = draw_FoodPatches(sto[-2])),
+                     size = 1.6, show.legend = F) + theme_void()+ 
+        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
+sp3 <- draw_hexagons(sto[[1]], z = sZp3, add = draw_hexagons(sto[[1]], size = 1.8, color = 'black',
+                                                             add = draw_FoodPatches(sto[-2])),
+                     size = 1.6, show.legend = F) + theme_void()+ 
+        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
 grid.arrange(Sdp1,Sdp2,Sdp3,nrow = 3, ncol = 1)
 
 
 
-####### BOTH PLOTS TOGETHER ###########
+####### BOTH PLOTS TOGETHER #######
 
+png(filename = '~/research/2022/ANTS/Figs_spinGlasses/spatial_correlations.png', 1000, 1000, res = 200)
+ggarrange(dp1, sp1, dp2, sp2, dp3, sp3, nrow = 3, ncol = 2, labels = c('a)', 'b)', 'c)', 'd)', 'e)', 'f)'))
+dev.off()
 grid.arrange(dp1, sp1, dp2, sp2, dp3, sp3, nrow = 3, ncol = 2)
