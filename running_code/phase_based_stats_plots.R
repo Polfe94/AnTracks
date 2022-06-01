@@ -257,8 +257,8 @@ for(i in seq_along(sto)){
         mI <- rbind(mI, I)
 }
 
-sto_phases <- list(N = list(p1N = p1N[-2], p2N = p2N[-2], p3N = p3N[-2]),
-                   I = list(p1I = p1I[-2], p2I = p2I[-2], p3I = p3I[-2]))
+sto_phases <- list(N = list(p1N = p1N, p2N = p2N, p3N = p3N),
+                   I = list(p1I = p1I, p2I = p2I, p3I = p3I))
 
 ## BOXPLOTS per phase
 ## +++ N +++

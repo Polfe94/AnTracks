@@ -48,16 +48,31 @@ dZp3[dZp3 > 0] <- norm_range(dZp3[dZp3 > 0], a = .Machine$double.eps, b = 1)
 # draw_hexagons(det[[1]], z = z, add = draw_hexagons(det[[1]], size = 2.3, color = 'black'), size = 2)
 dp1 <- draw_hexagons(det[[1]], z = dZp1, add = draw_hexagons(det[[1]], size = 1.8, color = 'black',
                                                              add = draw_FoodPatches(det[[1]])),
-                     size = 1.6, show.legend = F)+ theme_void() + 
-        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
+                     size = 1.6, show.legend = F) + 
+        geom_point(data = hex[634, ], aes(x, y), size = 2, color = 'grey40', shape = 17)+
+        theme_void() + theme(aspect.ratio = 0.5,
+                             axis.title.y = element_text(angle = 90, 
+                                                         margin = unit(c(0, 0, 0, 0), 'pt'),
+                                                         size = 9))+
+        ylab('Exploration') + ggtitle('                    DET')
+        
 dp2 <- draw_hexagons(det[[1]], z = dZp2, add = draw_hexagons(det[[1]], size = 1.8, color = 'black',
                                                              add = draw_FoodPatches(det[[1]])),
                      size = 1.6, show.legend = F)+ theme_void() + 
-        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
+        geom_point(data = hex[634, ], aes(x, y), size = 2, color = 'grey40', shape = 17)+
+        theme(aspect.ratio = 0.5,
+                axis.title.y = element_text(angle = 90, 
+                                            margin = unit(c(0, 0, 0, 0), 'pt'),
+                                            size = 9))+
+        ylab('Recruitment') + ggtitle('')
 dp3 <- draw_hexagons(det[[1]], z = dZp3, add = draw_hexagons(det[[1]], size = 1.8, color = 'black',
                                                              add = draw_FoodPatches(det[[1]])),
                      size = 1.6, show.legend = F)+theme_void() + 
-        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
+        geom_point(data = hex[634, ], aes(x, y), size = 2, color = 'grey40', shape = 17)+
+        theme(aspect.ratio = 0.5, axis.title.y = element_text(angle = 90, 
+                                                              margin = unit(c(0, 0, 0, 0), 'pt'),
+                                                              size = 9))+
+        ylab('Post recruitment') + ggtitle('')
 grid.arrange(dp1,dp2,dp3,nrow = 3, ncol = 1)
 
 ########## STOS +++ ##########
@@ -96,23 +111,26 @@ sZp3[sZp3 > 0] <- norm_range(sZp3[sZp3 > 0], a = .Machine$double.eps, b = 1)
 sp1 <- draw_hexagons(sto[[1]], z = sZp1, add = draw_hexagons(sto[[1]], size = 1.8, color = 'black',
                                                              add = draw_FoodPatches(sto[-2])),
                      size = 1.6, show.legend = F) + theme_void()+ 
-        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
+        geom_point(data = hex[634, ], aes(x, y), size = 2, color = 'grey40', shape = 17)+
+        theme(aspect.ratio = 0.5) + ggtitle('                      STO')
         
 sp2 <- draw_hexagons(sto[[1]], z = sZp2, add = draw_hexagons(sto[[1]], size = 1.8, color = 'black',
                                                              add = draw_FoodPatches(sto[-2])),
                      size = 1.6, show.legend = F) + theme_void()+ 
-        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
+        geom_point(data = hex[634, ], aes(x, y), size = 2, color = 'grey40', shape = 17)+
+        theme(aspect.ratio = 0.5) + ggtitle('')
 sp3 <- draw_hexagons(sto[[1]], z = sZp3, add = draw_hexagons(sto[[1]], size = 1.8, color = 'black',
                                                              add = draw_FoodPatches(sto[-2])),
                      size = 1.6, show.legend = F) + theme_void()+ 
-        theme(aspect.ratio = 0.5, plot.margin = unit(c(0, -20, 0, -30),units = 'pt'))
+        geom_point(data = hex[634, ], aes(x, y), size = 2, color = 'grey40', shape = 17)+
+        theme(aspect.ratio = 0.5) + ggtitle('')
 grid.arrange(Sdp1,Sdp2,Sdp3,nrow = 3, ncol = 1)
 
 
 
 ####### BOTH PLOTS TOGETHER #######
 
-png(filename = '~/research/2022/ANTS/Figs_spinGlasses/spatial_correlations.png', 1000, 1000, res = 200)
-ggarrange(dp1, sp1, dp2, sp2, dp3, sp3, nrow = 3, ncol = 2, labels = c('a)', 'b)', 'c)', 'd)', 'e)', 'f)'))
+png(filename = '~/research/2022/ANTS/Figs_spinGlasses/spatial_correlations.png', 8000, 8000, res = 1600)
+ggarrange(dp1, sp1, dp2, sp2, dp3, sp3, nrow = 3, ncol = 2)
 dev.off()
 grid.arrange(dp1, sp1, dp2, sp2, dp3, sp3, nrow = 3, ncol = 2)
