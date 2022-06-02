@@ -85,6 +85,32 @@ pairwise_cov.coords <- function(obj, t){
         z
 }
 
+mutual_info.coords <- function(obj, t){
+        m <- coords2matrix(obj)
+        m <- m[t, ]
+        
+        mc <- cov(m)
+        z <- numeric(length(det[[1]]$segments$o))
+        s <- det[[1]]$segments[, c('o', 'd')]
+        n <- colnames(mc)
+        for(i in n){
+                idx <- which(s$o == i)
+                sb <- s[idx, ]
+                tmp <- numeric(nrow(sb))
+                for(x in seq_len(nrow(sb))){
+                        r <- mc[n == sb$o[x], n == sb$d[x]]
+                        if(length(r)){
+                                tmp[x] <- r
+                        }
+                }
+                if(length(idx) != length(tmp)){
+                        print(i)
+                }
+                z[idx] <- tmp
+        }
+        z
+}
+
 get_N.coords <- function(obj){
         N <- numeric(length(seq(0, max(obj$data$Frame))))
         t <- unique(obj$data$Frame)

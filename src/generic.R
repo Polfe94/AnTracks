@@ -303,6 +303,10 @@ pairwise_cov <- function(obj, t){
         UseMethod('pairwise_cov')
 }
 
+mutual_info <- function(obj, t){
+        UseMethod('mutual_info')
+}
+
 get_neighbors <- function(obj, row){
         UseMethod('get_neighbors')
 }
