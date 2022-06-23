@@ -10,101 +10,143 @@ colnames(h) <- c('x', 'y')
 source('G:/research/2022/AnTracks/src/generic.R')
 source('G:/research/2022/AnTracks/src/coords.R')
 
+rm(list = ls()[grepl('json', ls())], visual, colony, current_dir, dirL, exp_condition, exps, conditionL)
+
 load('G:/research/2022/AnTracks/results/sto_coords.RData')
 load('G:/research/2022/AnTracks/results/det_coords.RData')
 
-rm(list = ls()[grepl('json', ls())], visual, colony, current_dir, dirL, exp_condition, exps, conditionL)
 
-library(scico)
+############## ++++ DETERMINIST EXPERIMENTS ++++ ############## 
 
-## read data
-# det
+#### PHASE 1 ####
 dp1 <- init(read.table('G:/research/2022/Figs_SpinGlasses/Det_I.dat', 
-                       col.names = c('Xmm', 'Ymm', 'Zexp', 'Zsim')), h, 'coords', segments = det[[1]]$segments)
+                       col.names = c('Xmm', 'Ymm', 'Zsim', 'Zexp')), h, 'coords', segments = det[[1]]$segments)
 dp1$data$Ymm <- dp1$data$Ymm + 995
 dp1 <- closest_node(dp1)
-df_dp1 <-  data.frame(x = h[dp1$data$node, 1], y = h[dp1$data$node, 2], z = dp1$data$Zexp)
-draw_hexagons(dp1, color = 'grey85', add = ggplot()+ geom_point(data = df_dp1, aes(x,y,color = z),
-                                                                          size = 5, alpha = 0.9)+
-                      scale_color_gradient(low = 'white', high = muted('red'))+
-                      theme(aspect.ratio = 0.5)) 
-# df_dp1$z[df_dp1$z < 0] <- norm_range(df_dp1$z[df_dp1$z < 0], -1, -.Machine$double.eps)
-# df_dp1$z[df_dp1$z > 0] <- norm_range(df_dp1$z[df_dp1$z > 0], .Machine$double.eps, 1)
-# draw_hexagons(dp1, size = 2) + geom_point(data = df_dp1, aes(x,y,color = z), size = 5) + 
-#         scale_color_gradient2(limits = c(-1, 1), low = muted('blue'), high = muted('red'))
+df_dp1 <-  data.frame(x = h[dp1$data$node, 1], y = h[dp1$data$node, 2], z = dp1$data$Zexp, z1 = dp1$data$Zsim)
 
 
+d1a <- draw_FoodPatches(det[[1]], fill = 'grey25', add = draw_hexagons(dp1, color = 'grey85',
+                                                                add = ggplot()+ geom_point(data = df_dp1, aes(x,y,color = z),
+                                                                                           size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-20,10,-260,-20), 'pt'))
+d1b <- draw_FoodPatches(det[[1]], fill = 'grey25', add = draw_hexagons(dp1, color = 'grey85',
+                                                                add = ggplot()+ geom_point(data = df_dp1, aes(x,y,color = z1),
+                                                                                           size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-260,10,0,-20), 'pt'))
+
+
+#### PHASE 2 ####
 dp2 <- init(read.table('G:/research/2022/Figs_SpinGlasses/Det_II.dat', 
-                       col.names = c('Xmm', 'Ymm', 'Zexp', 'Zsim')), h, 'coords', segments = det[[1]]$segments)
+                       col.names = c('Xmm', 'Ymm', 'Zsim', 'Zexp')), h, 'coords', segments = det[[1]]$segments)
 dp2$data$Ymm <- dp2$data$Ymm + 995
 dp2 <- closest_node(dp2)
-df_dp2 <-  data.frame(x = h[dp2$data$node, 1], y = h[dp2$data$node, 2], z = dp2$data$Zexp)
-draw_hexagons(dp2, color = 'grey85', add = ggplot()+ geom_point(data = df_dp2, aes(x,y,color = z),
-                                                                size = 5, alpha = 0.9)+
-                      scale_color_gradient(low = 'white', high = muted('red'))+
-                      theme(aspect.ratio = 0.5))
-# df_dp2$z <- norm_range(df_dp2$z, -1, 0)
-# df_dp2$z[df_dp2$z < 0] <- norm_range(df_dp2$z[df_dp2$z < 0], -1, -.Machine$double.eps)
-# df_dp2$z[df_dp2$z > 0] <- norm_range(df_dp2$z[df_dp2$z > 0], .Machine$double.eps, 1)
-# draw_hexagons(dp2, size = 2, color = 'grey80') + geom_point(data = df_dp2, aes(x,y,color = z),
-#                                                             size = 7.5, alpha = 0.7)+
-#         scale_color_viridis(option = 'plasma')
-# draw_hexagons(dp2, size = 2) + geom_point(data = df_dp2, aes(x,y,color = z), size = 5) +
-#         scale_color_gradient2(limits = c(-1, 0), low = muted('blue'), high = muted('red'), midpoint = -0.5)
+df_dp2 <-  data.frame(x = h[dp2$data$node, 1], y = h[dp2$data$node, 2], z = dp2$data$Zexp, z1 = dp2$data$Zsim)
+
+d2a <- draw_FoodPatches(det[[1]], fill = 'grey25', add = draw_hexagons(dp2, color = 'grey85', add = ggplot()+ geom_point(data = df_dp2, aes(x,y,color = z),
+                                                                                                                  size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-20,10,-260,-20), 'pt'))
+d2b <- draw_FoodPatches(det[[1]], fill = 'grey25', add = draw_hexagons(dp2, color = 'grey85', add = ggplot()+ geom_point(data = df_dp2, aes(x,y,color = z1),
+                                                                                                                  size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-260,10,0,-20), 'pt'))
 
 
+#### PHASE 3 ####
 dp3 <- init(read.table('G:/research/2022/Figs_SpinGlasses/Det_III.dat', 
-                       col.names = c('Xmm', 'Ymm', 'Zexp', 'Zsim')), h, 'coords', segments = det[[1]]$segments)
+                       col.names = c('Xmm', 'Ymm', 'Zsim', 'Zexp')), h, 'coords', segments = det[[1]]$segments)
 dp3$data$Ymm <- dp3$data$Ymm + 995
 dp3 <- closest_node(dp3)
-df_dp3 <-  data.frame(x = h[dp3$data$node, 1], y = h[dp3$data$node, 2], z = dp3$data$Zexp)
-draw_hexagons(dp3, color = 'grey85', add = ggplot()+ geom_point(data = df_dp3, aes(x,y,color = z),
-                                                                size = 5, alpha = 0.9)+
-                      scale_color_gradient(low = 'white', high = "#4C0000")+
-                      theme(aspect.ratio = 0.5))
-# draw_hexagons(dp3, size = 2, color = 'grey80') + geom_point(data = df_dp3, aes(x,y,color = z),
-#                                                             size = 7.5, alpha = 0.7)+
-#         scale_color_viridis(option = 'plasma')
-# df_dp3$z[df_dp3$z < 0] <- norm_range(df_dp3$z[df_dp3$z < 0], -1, -.Machine$double.eps)
-# df_dp3$z[df_dp3$z > 0] <- norm_range(df_dp3$z[df_dp3$z > 0], .Machine$double.eps, 1)
-# draw_hexagons(dp3, size = 2) + geom_point(data = df_dp3, aes(x,y,color = z), size = 5) + 
-#         scale_color_gradient2(limits = c(-1, 1), low = muted('blue'), high = muted('red'))
+df_dp3 <-  data.frame(x = h[dp3$data$node, 1], y = h[dp3$data$node, 2], z = dp3$data$Zexp, z1 = dp3$data$Zsim)
+
+d3a <- draw_FoodPatches(det[[1]], fill = 'grey25', add = draw_hexagons(dp3, color = 'grey85', add = ggplot()+ 
+                                                                        geom_point(data = df_dp3, aes(x,y,color = z),
+                                                                                   size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-20,10,-260,-20), 'pt'))
+d3b <- draw_FoodPatches(det[[1]], fill = 'grey25', add = draw_hexagons(dp3, color = 'grey85', add = ggplot()+ 
+                                                                        geom_point(data = df_dp3, aes(x,y,color = z1),
+                                                                                   size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-260,10,0,-20), 'pt'))
+
+png(filename = 'G:/research/2022/Figs_SpinGlasses/test_global_det.png', 6000, 4000, res = 300)
+ggarrange(d1a, d2a, d3a, d1b, d2b, d3b, nrow = 2, ncol = 3, legend = 'none')
+dev.off()
 
 
-draw_hexagons(dp1) + geom_point(data = data.frame(x = h[dp1$data$node, 1],
-                                                  y = h[dp1$data$node, 2],
-                                                  z = dp1$data$Zexp), aes(x, y, color = z))
+############## ++++ STOCHASTIC EXPERIMENTS ++++ ############## 
 
-# sto
-sp1 <- read.table('G:/research/2022/Figs_SpinGlasses/Sto_I.dat', 
-                  col.names = c('Xmm', 'Ymm', 'Zexp', 'Zsim'))
-sp2 <- read.table('G:/research/2022/Figs_SpinGlasses/Sto_II.dat', 
-                  col.names = c('Xmm', 'Ymm', 'Zexp', 'Zsim'))
-sp3 <- read.table('G:/research/2022/Figs_SpinGlasses/Sto_III.dat', 
-                  col.names = c('Xmm', 'Ymm', 'Zexp', 'Zsim'))
+#### PHASE 1 ####
+sp1 <- init(read.table('G:/research/2022/Figs_SpinGlasses/Sto_I.dat', 
+                       col.names = c('Xmm', 'Ymm', 'Zsim', 'Zexp')), h, 'coords', segments = det[[1]]$segments)
+sp1$data$Ymm <- sp1$data$Ymm + 995
+sp1 <- closest_node(sp1)
+df_sp1 <-  data.frame(x = h[sp1$data$node, 1], y = h[sp1$data$node, 2], z = sp1$data$Zexp, z1 = sp1$data$Zsim)
 
 
-draw_hexagons(det[[1]])+ geom_point(data = dp1, aes(V1-2.5, V2+995, color = V3))
-
-## DET ##
-
-
-ggplot(data = dp1, aes(V1, V2, color = V3)) + geom_point()
-
-
-ggplot(data = dp2, aes(V1, V2, color = V3)) + geom_point()
-
-
-ggplot(data = dp3, aes(V1, V2, color = V3)) + geom_point()
-
-## STO ##
+s1a <- draw_FoodPatches(sto, fill = 'grey25', add = draw_hexagons(sp1, color = 'grey85',
+                                                                add = ggplot()+ geom_point(data = df_sp1, aes(x,y,color = z),
+                                                                                           size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-20,10,-260,-20), 'pt'))
+s1b <- draw_FoodPatches(sto, fill = 'grey25', add = draw_hexagons(sp1, color = 'grey85',
+                                                                add = ggplot()+ geom_point(data = df_sp1, aes(x,y,color = z1),
+                                                                                           size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-260,10,0,-20), 'pt'))
 
 
-ggplot(data = sp1, aes(V1, V2, color = V3)) + geom_point()
+#### PHASE 2 ####
+sp2 <- init(read.table('G:/research/2022/Figs_SpinGlasses/Sto_II.dat', 
+                       col.names = c('Xmm', 'Ymm', 'Zsim', 'Zexp')), h, 'coords', segments = det[[1]]$segments)
+sp2$data$Ymm <- sp2$data$Ymm + 995
+sp2 <- closest_node(sp2)
+df_sp2 <-  data.frame(x = h[sp2$data$node, 1], y = h[sp2$data$node, 2], z = sp2$data$Zexp, z1 = sp2$data$Zsim)
+
+s2a <- draw_FoodPatches(sto, fill = 'grey25', add = draw_hexagons(sp2, color = 'grey85', add = ggplot()+ geom_point(data = df_sp2, aes(x,y,color = z),
+                                                                                                                  size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-20,10,-260,-20), 'pt'))
+s2b <- draw_FoodPatches(sto, fill = 'grey25', add = draw_hexagons(sp2, color = 'grey85', add = ggplot()+ geom_point(data = df_sp2, aes(x,y,color = z1),
+                                                                                                                  size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-260,10,0,-20), 'pt'))
 
 
-ggplot(data = sp2, aes(V1, V2, color = V3)) + geom_point()
+#### PHASE 3 ####
+sp3 <- init(read.table('G:/research/2022/Figs_SpinGlasses/Sto_III.dat', 
+                       col.names = c('Xmm', 'Ymm', 'Zsim', 'Zexp')), h, 'coords', segments = det[[1]]$segments)
+sp3$data$Ymm <- sp3$data$Ymm + 995
+sp3 <- closest_node(sp3)
+df_sp3 <-  data.frame(x = h[sp3$data$node, 1], y = h[sp3$data$node, 2], z = sp3$data$Zexp, z1 = sp3$data$Zsim)
 
+s3a <- draw_FoodPatches(sto, fill = 'grey25', add = draw_hexagons(sp3, color = 'grey85', add = ggplot()+ 
+                                                                        geom_point(data = df_sp3, aes(x,y,color = z),
+                                                                                   size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-20,10,-260,-20), 'pt'))
+s3b <- draw_FoodPatches(sto, fill = 'grey25', add = draw_hexagons(sp3, color = 'grey85', add = ggplot()+ 
+                                                                        geom_point(data = df_sp3, aes(x,y,color = z1),
+                                                                                   size = 5, show.legend = F)+
+                                                                        scale_color_gradient(low = 'white', high = "#4C0000")+
+                                                                        theme(aspect.ratio = 0.5)) )+
+        theme(plot.margin = unit(c(-260,10,0,-20), 'pt'))
 
-ggplot(data = sp3, aes(V1, V2, color = V3)) + geom_point()
-
+png(filename = 'G:/research/2022/Figs_SpinGlasses/test_global_sto.png', 6000, 4000, res = 300)
+ggarrange(s1a, s2a, s3a, s1b, s2b, s3b, nrow = 2, ncol = 3, legend = 'none')
+dev.off()
