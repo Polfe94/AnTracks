@@ -88,31 +88,16 @@ pairwise_cov.coords <- function(obj, t){
 mutual_info.coords <- function(obj, t){
         m <- coords2matrix(obj)
         m <- m[t, ]
-        pairs <- t(combn(colnames(m), 2))
         
-        for(i in 1:nrow(pairs)){
-                next # compute only for needed pairs
-        }
-        
-        
-        mi <- infotheo::mutinformation(as.data.frame(m))
         z <- numeric(length(det[[1]]$segments$o))
         s <- det[[1]]$segments[, c('o', 'd')]
-        n <- colnames(mi)
-        for(i in n){
-                idx <- which(s$o == i)
-                sb <- s[idx, ]
-                tmp <- numeric(nrow(sb))
-                for(x in seq_len(nrow(sb))){
-                        r <- mi[n == sb$o[x], n == sb$d[x]]
-                        if(length(r)){
-                                tmp[x] <- r
-                        }
-                }
-                if(length(idx) != length(tmp)){
-                        print(i)
-                }
-                z[idx] <- tmp
+        existing_segments <- s[s[, 'o'] %in% colnames(m) & s[, 'd'] %in% colnames(m), ]
+        
+        for(i in 1:nrow(existing_segments)){
+                
+                idx <- which(s$o == existing_segments[i, 1] & s$d == existing_segments[i, 2])
+                z[idx] <- infotheo::mutinformation(m[, existing_segments[i, 1]], m[, existing_segments[i, 2]])
+                
         }
         z
 }
