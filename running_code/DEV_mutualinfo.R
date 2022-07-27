@@ -49,36 +49,39 @@ for(i in seq_along(det)){
 
 plot_dp1 <- draw_hexagons(det[[1]], z = colMeans(dp1, na.rm = T), size = 1, 
                           add = draw_hexagons(det[[1]], size = 1.05,
-                                              add = draw_FoodPatches(det[[1]], fill = 'grey70')))+
+                                              add = draw_FoodPatches(det[[1]], fill = 'grey25')))+
         geom_point(data = hex[634, ], aes(x, y-50), size = 2, color = 'grey40', shape = 17)+
         theme_void()+
         theme(aspect.ratio = 0.5, legend.position = 'none', plot.title = element_text(hjust = 0.5),
               axis.title.y = element_text(angle = 90, margin = unit(c(0, 0, 0, 0), 'pt'),
                                           size = 9),
               plot.margin = unit(c(0, 0, -140,0), 'pt')) + ggtitle('DET')+ ylab('Exploration')+
-        scale_color_gradient(low = "white", high = "#4C0000")
+        scico::scale_color_scico(palette = 'davos', direction = -1) 
+        # scale_color_gradient(low = "white", high = "#4C0000")
 
 plot_dp2 <- draw_hexagons(det[[1]], z = colMeans(dp2, na.rm = T), size = 1, 
                           add = draw_hexagons(det[[1]], size = 1.05,
-                                              add = draw_FoodPatches(det[[1]], fill = 'grey70')))+
+                                              add = draw_FoodPatches(det[[1]], fill = 'grey25')))+
         geom_point(data = hex[634, ], aes(x, y-50), size = 2, color = 'grey40', shape = 17)+
         theme_void()+
         theme(aspect.ratio = 0.5, legend.position = 'none', plot.title = element_text(hjust = 0.5),
               axis.title.y = element_text(angle = 90, margin = unit(c(0, 0, 0, 0), 'pt'),
                                           size = 9),
               plot.margin = unit(c(-70, 0, -70,0), 'pt')) + ggtitle('')+ ylab('Recruitment')+
-        scale_color_gradient(low = "white", high = "#4C0000")
+        scico::scale_color_scico(palette = 'davos', direction = -1) 
+        # scale_color_gradient(low = "white", high = "#4C0000")
 
 plot_dp3 <- draw_hexagons(det[[1]], z = colMeans(dp3, na.rm = T), size = 1, 
               add = draw_hexagons(det[[1]], size = 1.05,
-                                  add = draw_FoodPatches(det[[1]], fill = 'grey70')))+
+                                  add = draw_FoodPatches(det[[1]], fill = 'grey25')))+
         geom_point(data = hex[634, ], aes(x, y-50), size = 2, color = 'grey40', shape = 17)+
         theme_void()+
         theme(aspect.ratio = 0.5, legend.position = 'none', plot.title = element_text(hjust = 0.5),
               axis.title.y = element_text(angle = 90, margin = unit(c(0, 0, 0, 0), 'pt'),
                                           size = 9),
               plot.margin = unit(c(-140, 0, 0,0), 'pt')) + ggtitle('')+ ylab('Post-recruitment')+
-        scale_color_gradient(low = "white", high = "#4C0000")
+        scico::scale_color_scico(palette = 'davos', direction = -1) 
+        # scale_color_gradient(low = "white", high = "#4C0000")
 
 
 #######                      #######
@@ -122,36 +125,39 @@ for(i in seq_along(sto)){
 
 plot_sp1 <- draw_hexagons(det[[1]], z = colMeans(sp1[-2, ], na.rm = T), size = 1, 
                           add = draw_hexagons(det[[1]], size = 1.05,
-                                              add = draw_FoodPatches(sto[-2], fill = 'grey70')))+
+                                              add = draw_FoodPatches(sto[-2], fill = 'grey25')))+
         geom_point(data = hex[634, ], aes(x, y-50), size = 2, color = 'grey40', shape = 17)+
         theme_void()+
         theme(aspect.ratio = 0.5, legend.position = 'none', plot.title = element_text(hjust = 0.5),
               axis.title.y = element_text(angle = 90, margin = unit(c(0, 0, 0, 0), 'pt'),
                                           size = 9),
               plot.margin = unit(c(0, 0, -140,0), 'pt')) + ggtitle('STO')+ ylab('')+
-        scale_color_gradient(low = "white", high = "#4C0000")
+        scico::scale_color_scico(palette = 'davos', direction = -1) 
+        # scale_color_gradient(low = "white", high = "#4C0000")
 
 plot_sp2 <- draw_hexagons(det[[1]], z = colMeans(sp2[-2, ], na.rm = T), size = 1, 
                           add = draw_hexagons(det[[1]], size = 1.05,
-                                              add = draw_FoodPatches(sto[-2], fill = 'grey70')))+
+                                              add = draw_FoodPatches(sto[-2], fill = 'grey25')))+
         geom_point(data = hex[634, ], aes(x, y-50), size = 2, color = 'grey40', shape = 17)+
         theme_void()+
         theme(aspect.ratio = 0.5, legend.position = 'none', plot.title = element_text(hjust = 0.5),
               axis.title.y = element_text(angle = 90, margin = unit(c(0, 0, 0, 0), 'pt'),
                                           size = 9),
               plot.margin = unit(c(-70, 0, -70,0), 'pt')) + ggtitle('')+ ylab('')+
-        scale_color_gradient(low = "white", high = "#4C0000")
+        scico::scale_color_scico(palette = 'davos', direction = -1)  
+        # scale_color_gradient(low = "white", high = "#4C0000")
 
 plot_sp3 <- draw_hexagons(det[[1]], z = colMeans(sp3[-2, ], na.rm = T), size = 1, 
                           add = draw_hexagons(det[[1]], size = 1.05,
-                                              add = draw_FoodPatches(sto[-2], fill = 'grey70')))+
+                                              add = draw_FoodPatches(sto[-2], fill = 'grey25')))+
         geom_point(data = hex[634, ], aes(x, y-50), size = 2, color = 'grey40', shape = 17)+
         theme_void()+
         theme(aspect.ratio = 0.5, legend.position = 'none', plot.title = element_text(hjust = 0.5),
               axis.title.y = element_text(angle = 90, margin = unit(c(0, 0, 0, 0), 'pt'),
                                           size = 9),
               plot.margin = unit(c(-140, 0, 0,0), 'pt')) + ggtitle('')+ ylab('')+
-        scale_color_gradient(low = "white", high = "#4C0000")
+        scico::scale_color_scico(palette = 'davos', direction = -1) 
+        # scale_color_gradient(low = "white", high = "#4C0000")
 
 
 png(filename = '~/research/2022/ANTS/Figs_spinGlasses/fig_sencera.png', 4000, 6000, res = 900)

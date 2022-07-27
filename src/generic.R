@@ -202,7 +202,7 @@ coords2matrix <- function(obj){
                 idx <- which(colnames(m) == n[i])
                 m[t[i], idx] <- 1
         }
-        class(m) <- 'nodes'
+        # class(m) <- 'nodes'
         m
 }
 
