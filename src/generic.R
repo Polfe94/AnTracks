@@ -11,9 +11,9 @@ library(scales) # color ??
 # mixOmics #required
 
 #### Common ggplot theme ####
-ggplot <- function(...) ggplot2::ggplot(...) + scale_color_gradient2(low = muted('blue'), 
-                                                                     high = muted('red')) +
-        scale_fill_gradient2(low = muted('blue'), high = muted('red'))
+# ggplot <- function(...) ggplot2::ggplot(...) + scale_color_gradient2(low = muted('blue'), 
+#                                                                      high = muted('red')) +
+#         scale_fill_gradient2(low = muted('blue'), high = muted('red'))
 theme_set(ggplot2::theme_classic() + ggplot2::theme(axis.title = element_text(size  = 15, color = 'black'),
                                                     axis.text = element_text(size = 15, color = 'black'),
                                                     legend.text = element_text(size =15, color = 'black'),
