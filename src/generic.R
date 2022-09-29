@@ -111,6 +111,16 @@ rotate.theta <- function(x, y, theta = pi/2){
      as.data.frame(m)
 }
 
+get_nest <- function(region = 'top'){
+        if(region == 'top'){
+                c(1020, 1015)
+        } else if (grepl('bot', region)){
+                c(990, 990)
+        } else {
+                rbind(c(1020, 1015), c(990, 990))
+        }
+}
+
 closest_node <- function(obj){
         if(!'coords' %in% class(obj)){
                 return(obj)
@@ -278,6 +288,37 @@ draw_FoodPatches <- function(obj, add = NULL, ...){
         add
 }
 
+geom_circle <- function(center, r, npoints = 100, ...){
+        sq <- seq(0, 2*pi, length.out = npoints)
+        if(is.data.frame(center)){
+                
+                if(nrow(center) == 1){
+                        x <- center[, 1] + r * cos(sq)
+                        y <- center[, 2] + r * sin(sq)
+                        geom_path(data = data.frame(x = x, y = y), aes(x, y), ...)
+                } else {
+                        x <- c()
+                        y <- c()
+                        g <- c()
+                        for(i in seq_len(nrow(center))){
+                                x <- c(x, center[i, 1] + r * cos(sq))
+                                y <- c(y, center[i, 2] + r * sin(sq))
+                                g <- c(g, rep(i, npoints))
+                        }
+                        geom_path(data = data.frame(x = x, y = y, g = g), aes(x, y, group = factor(g)), ...)
+                }
+                
+        } else if (is.atomic(center) && length(center) == 2){
+                
+                geom_path(data = data.frame(x = center[1] + r * cos(sq),
+                                            y = center[2] + r * sin(sq)),
+                          aes(x, y, group = factor(g)), ...)
+        } else {
+                stop('Please use a data.frame or an atomic vector of length to for the center')
+        }
+        
+}
+
 #### Methods ####
 get_N <- function(obj){
      UseMethod('get_N')
@@ -303,7 +344,7 @@ pairwise_cov <- function(obj, t){
         UseMethod('pairwise_cov')
 }
 
-mutual_info <- function(obj, t){
+mutual_info <- function(obj, t, nodes, subset){
         UseMethod('mutual_info')
 }
 
