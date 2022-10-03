@@ -25,8 +25,12 @@ regions$region <- c(rep('food_patch_1', sum(idx_1)),rep('food_patch_2', sum(idx_
 if(exists('do_plot') && do_plot == TRUE){
      print(
           suppressMessages(
-                  draw_hexagons(det[[1]], add = ggplot(data = sgm[idx_1 | idx_2 | idx_3, ], aes(x, y))+geom_point())+
-                          geom_circle(centers, 150, color = 'blue')
+                  draw_FoodPatches(det[[1]], add = draw_hexagons(det[[1]]), fill = 'grey50')+
+                          geom_point(data = sgm[idx_1 | idx_2 | idx_3, ], aes(x, y))+
+                          geom_circle(centers, 150, color = 'blue') + 
+                          geom_point(data = data.frame(x = nest[1], y = nest[2]-100),
+                                     aes(x, y), color = 'red', size = 3)
+                  
           ))
 }
 

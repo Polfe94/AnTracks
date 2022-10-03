@@ -19,6 +19,15 @@ theme_set(ggplot2::theme_classic() + ggplot2::theme(axis.title = element_text(si
                                                     legend.text = element_text(size =15, color = 'black'),
                                                     legend.title = element_text(size = 15, color = 'black')))
 
+if(file.exists(normalizePath(paste0(sys.frames()[[1]]$ofile, '/../../data/hex.csv')))){
+        hex <- read.csv(normalizePath(paste0(sys.frames()[[1]]$ofile, '/../../data/hex.csv')))
+} else {
+        warning("File hex.csv does not exist. Trying to download from repository.")
+        download.file("https://github.com/Polfe94/AnTracks/tree/main/data/hex.csv",
+                      normalizePath(paste0(sys.frames()[[1]]$ofile, '/../../data/hex.csv')))
+        hex <- read.csv(normalizePath(paste0(sys.frames()[[1]]$ofile, '/../../data/hex.csv')))
+}
+
 
 #### Functions +++ Computation ####
 
@@ -78,6 +87,11 @@ pdist <- function(A, B, ret.vec = TRUE){
      } else {
           d
      }
+}
+
+get_node <- function(x, y, ref){
+        xy <- t(c(x, y))
+        which.min(pdist(xy, as.matrix(ref)))
 }
 
 #' Normalizes a numeric vector to fit in a given range
@@ -212,7 +226,29 @@ coords2matrix <- function(obj){
                 idx <- which(colnames(m) == n[i])
                 m[t[i], idx] <- 1
         }
-        # class(m) <- 'nodes'
+        
+        m
+}
+
+interaction_matrix <- function(obj){
+        if(!'coords' %in% class(obj)){
+                stop('Object must be of class "coords"')
+        }
+        if(!'node' %in% colnames(obj$data)){
+                stop('Object must have "node" computed')
+        }
+        n <- obj$data$node
+        t <- obj$data$Frame[obj$data$Crossings > 0]
+        m <- matrix(data = 0, ncol = length(unique(n)),
+                    nrow = max(obj$data$Frame))
+        dimnames(m) <- list(seq_len(nrow(m)), unique(n))
+        
+        for(i in seq_along(t)){
+                idx <- which(colnames(m) == n[i])
+                m[t[i], idx] <- m[t[i], idx] + 1
+                # m[t[i], idx] <- 1
+        }
+        
         m
 }
 
