@@ -12,8 +12,25 @@ centers <- rbind(food[[1]][5, 1:2], food[[2]][5, 1:2])
 centers$y <- centers$y - 50
 
 nest <- get_nest()
+
+lnest <- data.frame(x = hex[get_node(nest[1]- 86*4, nest[2], hex), 1], y = nest[2] + 100)
+rnest <- data.frame(x = hex[get_node(nest[1]+ 86*4, nest[2], hex), 1], y = nest[2] + 100)
+diagleft <- data.frame(x = hex[get_node(nest[1] - 86*5/2, nest[2], hex), 1], y = nest[2] +  )
+diagright <- hex[get_node(nest[1] + 86*5/2, nest[2] + 3 * 100, hex), ]
+tl <- hex[get_node(86*3/2, 1990, hex), ]
+tl[2] <- tl[2] - 100
+tm <- c(tl[1] + 10 * 86.62, tl[2])
+tr <- c(tl[1] + 19 * 86.62, tl[2])
+bl <- hex[get_node(0 + 86*3/2, 1020, hex), ]
+bl[2] <- tl[2] + 100
+br <- c(tl[1] + 19 * 86.62, bl[2])
 nest[2] <- nest[2] + 100
 centers <- rbind(centers, nest)
+L <- list(lnest = lnest, rnest = rnest, diagleft = diagleft, diagright = diagright,
+          tl = tl, tm = tm, tr = tr, bl = bl, br = br)
+
+idxL <- lapply(L, function(i) inRadius(coords = sgm[, 1:2],center = c(i, recursive = T), r = 150))
+idxM <- apply(do.call('rbind', idxL), 2, any)
 
 idx_1 <- inRadius(coords = sgm[, 1:2], center = c(centers[1, ], recursive = T), r = 150)
 idx_2 <- inRadius(coords = sgm[, 1:2], center = c(centers[2, ], recursive = T), r = 150)
