@@ -19,15 +19,14 @@ theme_set(ggplot2::theme_classic() + ggplot2::theme(axis.title = element_text(si
                                                     legend.text = element_text(size =15, color = 'black'),
                                                     legend.title = element_text(size = 15, color = 'black')))
 
-if(file.exists(normalizePath(paste0(sys.frames()[[1]]$ofile, '/../../data/hex.csv')))){
-        hex <- read.csv(normalizePath(paste0(sys.frames()[[1]]$ofile, '/../../data/hex.csv')))
-} else {
+Path2File <- normalizePath(paste0(gsub('generic.R', '', paste0(sys.frames()[[1]]$ofile)), '/../data/hex.csv'))
+if(!file.exists(Path2File)){
         warning("File hex.csv does not exist. Trying to download from repository.")
         download.file("https://github.com/Polfe94/AnTracks/tree/main/data/hex.csv",
-                      normalizePath(paste0(sys.frames()[[1]]$ofile, '/../../data/hex.csv')))
-        hex <- read.csv(normalizePath(paste0(sys.frames()[[1]]$ofile, '/../../data/hex.csv')))
-}
-
+                      Path2File)
+} 
+hex <- read.csv(Path2File)
+rm(Path2File)
 
 #### Functions +++ Computation ####
 
@@ -141,9 +140,15 @@ closest_node <- function(obj){
         }
 
         xy <- cbind(obj$data$Xmm, obj$data$Ymm)
-        h <- as.matrix(obj$refcoords)
+        # h <- as.matrix(obj$refcoords)
+        idx <- obj$refcoords[, 'y'] > 1000
+        n <- obj$refcoords$node[idx]
+        h <- as.matrix(obj$refcoords[idx, c('x', 'y')])
+        # idx <- vapply(seq_len(nrow(xy)), function(i){
+        #         which.min(pdist(h, t(xy[i, ])))
+        # }, integer(1))
         idx <- vapply(seq_len(nrow(xy)), function(i){
-                which.min(pdist(h, t(xy[i, ])))
+                n[which.min(pdist(h, t(xy[i, ])))]
         }, integer(1))
         obj$data$node <- idx
         obj
@@ -175,7 +180,8 @@ inRadius <- function(coords, center, r){
 compute_segments <- function(obj){
      refcoords <- obj$refcoords
      r <- obj$r
-     xy <- as.matrix(refcoords[, c('x', 'y')])
+     # xy <- as.matrix(refcoords[, c('x', 'y')])
+     xy <- as.matrix(refcoords[refcoords[, 'y'] > 1000, c('x', 'y')])
      df <- c()
 
      for(i in 1:nrow(xy)){
