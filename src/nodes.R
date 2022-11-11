@@ -2,6 +2,27 @@ node_idx.nodes <- function(obj, row){
         as.integer(rownames(obj$data[row, ]))
 }
 
+food_trails.nodes <- function(obj, method = 'post-recruitment', prob = 0.85){
+        if(method == 'in-recruitment'){
+                obj$intervals <- range(do.call('rbind', obj$food)$t)
+        } else if(method == 'post-recruitment'){
+                obj$intervals <- c(max(do.call('rbind', obj$food)$t), max(obj$data$Frame))
+        } else {
+                stop('Currently available methods are "in-recruitment" and "post-recruitment"')
+        }
+        
+        m <- obj$data
+        m <- m[obj$intervals[1]:obj$intervals[2], ]
+        x <- colSums(m)
+        x[x < quantile(x, prob = prob)] <- 0
+        y <- as.integer(names(x))
+        if(1241 %in% y){
+                y <- transform_nodes(y)
+                names(x) <- y
+        }
+        y[x > 0]
+}
+
 mutual_info.nodes <- function(obj, t, nodes = NULL, subset = FALSE){
      m <- obj$data[t, ]
      

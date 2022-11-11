@@ -406,6 +406,13 @@ food_detection <- function(obj, r){
         UseMethod('food_detection')
 }
 
+food_trails <- function(obj, method, prob){
+        if(!'food' %in% names(obj)){
+                stop('Compute food times before searching for food trails!')
+        } 
+        UseMethod('food_trails')
+}
+
 #### +++ Extract meta-information from experiments +++ ####
 
 #' Extracts additional information from experiments (such as patch location)
@@ -463,7 +470,7 @@ foodpatches.top <- function(obj){
         dx <- 86.62
         ref <- 80 # node index top left
         
-        start <- as.numeric(hex[ref, ])
+        start <- as.numeric(hex[ref, c('x', 'y')])
         start[2] <- start[2] - dy
         pos <- start
 
@@ -487,7 +494,7 @@ foodpatches.bot <- function(obj){
         dx <- 86.62
         ref <- 1161 # node index bottom right
         
-        start <- as.numeric(hex[ref, ])
+        start <- as.numeric(hex[ref, c('x', 'y')])
         start[2] <- start[2] + dy
         pos <- start
         

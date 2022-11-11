@@ -6,6 +6,29 @@ node_idx.coords <- function(obj, row){
         as.integer(rownames(obj$refcoords)[idx])
 }
 
+food_trails.coords <- function(obj, method = 'post-recruitment', prob = 0.85){
+        
+        if(method == 'in-recruitment'){
+                obj$intervals <- range(do.call('rbind', obj$food)$t)
+        } else if(method == 'post-recruitment'){
+                obj$intervals <- c(max(do.call('rbind', obj$food)$t), max(obj$data$Frame))
+        } else {
+                stop('Currently available methods are "in-recruitment" and "post-recruitment"')
+        }
+        
+        m <- coords2matrix(obj)
+        m[m == -1] <- 0
+        m <- m[obj$intervals[1]:obj$intervals[2], ]
+        x <- colSums(m)
+        x[x < quantile(x, prob = prob)] <- 0
+        y <- as.integer(names(x))
+        if(1241 %in% y){
+                y <- transform_nodes(y)
+                names(x) <- y
+        }
+        y[x > 0]
+}
+
 get_neighbors.coords <- function(obj, row){
         
         if(!'segments' %in% names(obj)){
