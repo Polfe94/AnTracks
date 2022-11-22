@@ -1,4 +1,5 @@
 #### Libraries ####
+library(pointr)
 library(parallel)
 library(viridis)
 library(gridExtra)
@@ -211,31 +212,6 @@ aggregate_time <- function(t, tau = 10){
      idx
 }
 
-#' Transforms an object of class coords to an object of class nodes
-#' 
-#' @param obj An object of class coords
-#' @return An object of class nodes
-coords2matrix <- function(obj){
-        
-        if(!'coords' %in% class(obj)){
-                stop('Object must be of class "coords"')
-        }
-        if(!'node' %in% colnames(obj$data)){
-                stop('Object must have "node" computed')
-        }
-        n <- obj$data$node
-        t <- obj$data$Frame
-        m <- matrix(data = -1, ncol = length(unique(n)), nrow = max(t))
-        dimnames(m) <- list(seq_len(nrow(m)), unique(n))
-        
-        for(i in seq_along(t)){
-                idx <- which(colnames(m) == n[i])
-                m[t[i], idx] <- 1
-        }
-        
-        m
-}
-
 interaction_matrix <- function(obj){
         if(!'coords' %in% class(obj)){
                 stop('Object must be of class "coords"')
@@ -257,6 +233,94 @@ interaction_matrix <- function(obj){
         
         m
 }
+
+interactions_in_trail <- function(obj, ...){
+        if(!'trails' %in% names(obj)){
+                obj$trails <- food_trails(obj, ...)
+        }
+        if(!'IiT' %in% names(obj)){
+                m <- interaction_matrix(obj)
+                df<- data.frame(t = as.integer(rownames(m)), 
+                                N = rowSums(m),
+                                inTrail = rowSums(m[, as.character(obj$trails)]),
+                                outTrail = rowSums(m[, !colnames(m) %in% as.character(obj$trails)]))
+                mlt_df <- reshape2::melt(df, id.vars = 't')
+        } else {
+                mlt_df <- obj$IiT
+        }
+        mlt_df
+}
+
+
+activity_in_trail <- function(obj, ...){
+        if(!'trails' %in% names(obj)){
+                obj$trails <- food_trails(obj, ...)
+        }
+        if(!'AiT' %in% names(obj)){
+                m <- coords2matrix(obj, data = 0)
+                df<- data.frame(t = as.integer(rownames(m)), 
+                                N = rowSums(m),
+                                inTrail = rowSums(m[, as.character(obj$trails)]),
+                                outTrail = rowSums(m[, !colnames(m) %in% as.character(obj$trails)]))
+                mlt_df <- reshape2::melt(df, id.vars = 't')
+        } else {
+                mlt_df <- obj$AiT
+        }
+        # ptr('tmp', obj$food[1:2])
+        # name <- deparse(substitute(obj))
+        # if(grepl('[[i]]', name)){
+        #         name <- gsub('i', eval(i), name)
+        # }
+        # name <- paste0(name, '["food"][1:2]')
+        # print(name)
+        # print(as.character(name))
+        # x <- list(data = mlt_df, food = parse(text = paste0("ptr('tmp', ", name, ")")))
+        mlt_df
+        # x <- list(data = mlt_df, food = obj$food)
+        # class(x) <- 'AiT'
+        # x
+}
+
+transform_nodes <- function(x){
+        r <- numeric(length(x))
+        idx <- 1
+        for(i in x){
+                r[idx] <- hex$node[hex$old_node == i]
+                idx <- idx + 1
+        }
+        r
+}
+
+food_trails <- function(obj, method = 'post-exploration', prob = 0.90){
+        
+        if(!'food' %in% names(obj)){
+                stop('Compute food times before searching for food trails!')
+        } 
+        if(method == 'in-recruitment'){
+                intervals <- range(do.call('rbind', obj$food)$t)
+        } else if(method == 'post-recruitment'){
+                intervals <- c(max(do.call('rbind', obj$food)$t), max(obj$data$Frame))
+        } else if(method == 'post-exploration'){
+                intervals <- c(min(do.call('rbind', obj$food)$t), max(obj$data$Frame))
+        } else if(method == 'mid-recruitment') {
+                intervals <- c(as.integer(mean(do.call('rbind', obj$food)$t)), max(obj$data$Frame))
+        } else {
+                stop('Currently available methods are "in-recruitment" and "post-recruitment"')
+        }
+        
+        m <- coords2matrix(obj, data = 0)
+        m <- m[intervals[1]:intervals[2], ]
+        
+        x <- colSums(m)
+        x[x < quantile(x, prob = prob)] <- 0
+        y <- as.integer(names(x))
+        if(1241 %in% y){
+                y <- transform_nodes(y)
+                names(x) <- y
+        }
+        y[x > 0]
+}
+
 
 cluster_lengths <- function(x, tau = 10){
      
@@ -330,6 +394,86 @@ draw_FoodPatches <- function(obj, add = NULL, ...){
         add
 }
 
+plot.IiT <- function(obj){
+        df <- obj$data
+        
+        ylim <- c(0, 0, rep(max(df$value), 2))
+        xlim <- range(do.call('rbind', obj$food)$t)[c(1:2, 2:1)]/120
+        
+        ggplot(data = df, aes(t/120, value, color = variable))+
+                geom_line() + scale_y_continuous('', breaks = seq(0, max(ylim), 0.5)) +
+                scale_color_viridis_d('', labels = c('Total Interactions', 
+                                                     'Interactions in trail', 'Interactions out trail'))+
+                scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))+
+                geom_polygon(data = data.frame(x = xlim,
+                                               y = ylim), aes(x, y),
+                             fill = muted('green'), color = 'green', alpha = 0.15, linetype = 2, size = 1)+
+                guides(color = guide_legend(override.aes = list(size = 2)))
+
+        
+}
+
+plot_trails <- function(obj){
+        draw_hexagons(obj, add = draw_FoodPatches(obj, fill = 'grey50') +
+                              geom_point(data = data.frame(x = hex$x[obj$trails],
+                                                           y = hex$y[obj$trails]),
+                                         aes(x, y), fill = muted('blue'), size = 4, shape = 21))
+}
+
+plot_IiT <- function(obj){
+        df <- obj$IiT
+        tmp <- obj$food
+        # eval(obj$food)
+        
+        
+        ylim <- c(0, 0, rep(max(df$value), 2))
+        xlim <- range(do.call('rbind', tmp)$t)[c(1:2, 2:1)]/120
+        
+        ggplot(data = df, aes(t/120, value, color = variable))+
+                geom_line() + scale_y_continuous('', breaks = seq(0, max(ylim), 1)) +
+                scale_color_viridis_d('', labels = c('Total activity', 'Activity in trail', 'Activity out trail'))+
+                scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))+
+                geom_polygon(data = data.frame(x = xlim,
+                                               y = ylim), aes(x, y),
+                             fill = muted('green'), color = 'green', alpha = 0.15, linetype = 2, size = 1)+
+                guides(color = guide_legend(override.aes = list(size = 2)))
+        
+}
+
+plot_interactions <- function(obj){
+        m <- interaction_matrix(obj)
+        nodes <- transform_nodes(as.integer(colnames(m)))
+        y <- colSums(m)
+        idx <- y > 0
+        draw_hexagons(obj, add = draw_FoodPatches(obj, fill = 'grey50') +
+                              geom_point(data = data.frame(x = hex$x[nodes[idx]],
+                                                           y = hex$y[nodes[idx]],
+                                                           z = y[idx]),
+                                         aes(x, y, fill = z), size = 4, shape = 21, show.legend = F))+
+                geom_point(data = as.data.frame(matrix(get_nest(), ncol = 2, dimnames = list(1, c('x', 'y')))),
+                           aes(x, y), shape = 17, size = 2.5)
+}
+
+plot_AiT <- function(obj){
+        df <- obj$AiT
+        tmp <- obj$food
+        # eval(obj$food)
+        
+        
+        ylim <- c(0, 0, rep(max(df$value), 2))
+        xlim <- range(do.call('rbind', tmp)$t)[c(1:2, 2:1)]/120
+
+        ggplot(data = df, aes(t/120, value, color = variable))+
+                geom_line() + scale_y_continuous('', breaks = seq(0, max(ylim), 5)) +
+                scale_color_viridis_d('', labels = c('Total activity', 'Activity in trail', 'Activity out trail'))+
+                scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))+
+                geom_polygon(data = data.frame(x = xlim,
+                                               y = ylim), aes(x, y),
+                             fill = muted('green'), color = 'green', alpha = 0.15, linetype = 2, size = 1)+
+                guides(color = guide_legend(override.aes = list(size = 2)))
+        
+}
+
 geom_circle <- function(center, r, npoints = 100, ...){
         sq <- seq(0, 2*pi, length.out = npoints)
         if(is.data.frame(center)){
@@ -362,6 +506,10 @@ geom_circle <- function(center, r, npoints = 100, ...){
 }
 
 #### Methods ####
+.plot <- function(obj, type){
+        UseMethod('plot', type)
+}
+
 get_N <- function(obj){
      UseMethod('get_N')
 }
@@ -406,12 +554,13 @@ food_detection <- function(obj, r){
         UseMethod('food_detection')
 }
 
-food_trails <- function(obj, method, prob){
-        if(!'food' %in% names(obj)){
-                stop('Compute food times before searching for food trails!')
-        } 
-        UseMethod('food_trails')
+coords2matrix <- function(obj, data){
+        UseMethod('coords2matrix')
 }
+
+# .foodTrails <- function(obj, prob){
+#         UseMethod('food_trails')
+# }
 
 #### +++ Extract meta-information from experiments +++ ####
 
