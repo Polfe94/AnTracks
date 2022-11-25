@@ -155,8 +155,9 @@ setMethod('interaction_matrix', 'Experiment', function(obj){
         if(nrow(obj@interactions) == 0){
                 obj <- compute_nodes(obj)
                 dt <- data.table(obj@data[, c('Frame', 'node', 'Crossings')])
-                m <- dt[Crossings > 0, .N > 0, by = c('node', 'Frame')]
-                obj@interactions <- m[, c('Frame', 'node')]
+                m <- dt[Crossings > 0, N := .N > 0, by = c('node', 'Frame')]
+                
+                obj@interactions <- m[, c('Frame', 'node', 'N')]
         }
         obj
 })
