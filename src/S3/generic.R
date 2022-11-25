@@ -135,26 +135,25 @@ get_nest <- function(region = 'top'){
         }
 }
 
-## DEPRECATED !!
-# closest_node <- function(obj){
-#         if(!'coords' %in% class(obj)){
-#                 return(obj)
-#         }
-# 
-#         xy <- cbind(obj$data$Xmm, obj$data$Ymm)
-#         # h <- as.matrix(obj$refcoords)
-#         idx <- obj$refcoords[, 'y'] > 1000
-#         n <- obj$refcoords$node[idx]
-#         h <- as.matrix(obj$refcoords[idx, c('x', 'y')])
-#         # idx <- vapply(seq_len(nrow(xy)), function(i){
-#         #         which.min(pdist(h, t(xy[i, ])))
-#         # }, integer(1))
-#         idx <- vapply(seq_len(nrow(xy)), function(i){
-#                 n[which.min(pdist(h, t(xy[i, ])))]
-#         }, integer(1))
-#         obj$data$node <- idx
-#         obj
-# }
+closest_node <- function(obj){
+        if(!'coords' %in% class(obj)){
+                return(obj)
+        }
+
+        xy <- cbind(obj$data$Xmm, obj$data$Ymm)
+        # h <- as.matrix(obj$refcoords)
+        idx <- obj$refcoords[, 'y'] > 1000
+        n <- obj$refcoords$node[idx]
+        h <- as.matrix(obj$refcoords[idx, c('x', 'y')])
+        # idx <- vapply(seq_len(nrow(xy)), function(i){
+        #         which.min(pdist(h, t(xy[i, ])))
+        # }, integer(1))
+        idx <- vapply(seq_len(nrow(xy)), function(i){
+                n[which.min(pdist(h, t(xy[i, ])))]
+        }, integer(1))
+        obj$data$node <- idx
+        obj
+}
 
 #' Checks if a list of points is inside a radius
 #' 
@@ -175,31 +174,29 @@ inRadius <- function(coords, center, r){
 
 }
 
-
-## DEPRECATED !!
 #' Computes the "origin - destination" (neighbouring) segments in the hexagonal lattice
 #' 
 #' @param obj An object of whatever class (coords, lattice or simulations)
 #' @return A data.frame with the origin coordinates and the destination (neighbouring) coordinates
-# compute_segments <- function(obj){
-#      refcoords <- obj$refcoords
-#      r <- obj$r
-#      # xy <- as.matrix(refcoords[, c('x', 'y')])
-#      xy <- as.matrix(refcoords[refcoords[, 'y'] > 1000, c('x', 'y')])
-#      df <- c()
-# 
-#      for(i in 1:nrow(xy)){
-#           idx <- pdist(t(xy[i, ]), xy) < r
-#           idx[i] <- FALSE
-#           
-#           df <- rbind(df, data.frame(x = rep(xy[i, 1], sum(idx)),
-#                                      y = rep(xy[i, 2], sum(idx)),
-#                                      xend = xy[idx, 1], yend = xy[idx, 2],
-#                                      o = rep(rownames(xy)[i], sum(idx)),
-#                                      d = rownames(xy)[idx]))
-#      }
-#      df
-# }
+compute_segments <- function(obj){
+     refcoords <- obj$refcoords
+     r <- obj$r
+     # xy <- as.matrix(refcoords[, c('x', 'y')])
+     xy <- as.matrix(refcoords[refcoords[, 'y'] > 1000, c('x', 'y')])
+     df <- c()
+
+     for(i in 1:nrow(xy)){
+          idx <- pdist(t(xy[i, ]), xy) < r
+          idx[i] <- FALSE
+          
+          df <- rbind(df, data.frame(x = rep(xy[i, 1], sum(idx)),
+                                     y = rep(xy[i, 2], sum(idx)),
+                                     xend = xy[idx, 1], yend = xy[idx, 2],
+                                     o = rep(rownames(xy)[i], sum(idx)),
+                                     d = rownames(xy)[idx]))
+     }
+     df
+}
 
 aggregate_time <- function(t, tau = 10){
      sq <- seq(min(t), max(t), tau)

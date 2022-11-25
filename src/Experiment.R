@@ -37,7 +37,7 @@ setClass('Experiment', representation(
         N = 'numeric',
         I = 'numeric',
         connectivity = 'numeric',
-        trails = 'data.frame',
+        trails = 'numeric',
         AiT = 'data.frame',
         IiT = 'data.frame'
 ), prototype = list(
@@ -74,8 +74,8 @@ setGeneric('mutual_info', function(obj, t, nodes = NULL){
         standardGeneric('mutual_info')
 })
 
-setGeneric('get_foodPatches', function(...){
-        standardGeneric('get_foodPatches')
+setGeneric('get_fp', function(obj){
+        standardGeneric('get_fp')
 })
 
 setGeneric('food_detection', function(obj){
@@ -86,10 +86,21 @@ setGeneric('food_trails', function(obj){
         standardGeneric('food_trails')
 })
 
+setGeneric('ait', function(obj, ...){
+        standardGeneric('ait')
+})
+
+setGeneric('iit', function(obj, ...){
+        standardGeneric('iit')
+})
+
 setGeneric('draw_FoodPatches', function(obj, add = NULL, ...){
         standardGeneric('draw_FoodPatches')
 })
 
+setGeneric('plot_trails', function(obj){
+        standardGeneric('plot_trails')
+})
 
 #### +++ CLASS METHODS +++ ####
 setMethod('get_N', 'Experiment', function(obj){
@@ -118,14 +129,6 @@ setMethod('compute_nodes', signature = 'Experiment', function(obj){
         if(!'node' %in% colnames(obj@data)){
                 
                 obj@data$node <- get_node(obj@data[, c('Xmm', 'Ymm')], xy = obj@refcoords)
-                
-                # ref <- as.matrix(obj@refcoords[, c('x', 'y')])
-                # 
-                # m <- matrix(c(obj@data$Xmm, obj@data$Ymm), ncol = 2)
-                # d <- pdist(m, ref, ret.vec = FALSE)
-                # idx <- apply(d, 1, which.min)
-                # 
-                # obj@data$node <- obj@refcoords$node[idx]
                 
                 # clean memmory
                 do.call('gc', list(FALSE))
@@ -204,8 +207,7 @@ setMethod('get_matrix', 'Experiment', function(obj, ...){
 #      obj
 # })
 
-setMethod('get_foodPatches', 'Experiment', function(...){
-        obj <- list(...)[[1]]
+setMethod('get_fp', 'Experiment', function(obj){
         if(!length(obj@food)){
                 d <- obj@date
                 if(length(d)){
@@ -257,29 +259,6 @@ setMethod('mutual_info', 'Experiment', function(obj, t, nodes = NULL){
         z
 })
 
-
-#### +++ VISUALIZATION METHODS +++ ####
-#' Draws the food patches
-#' 
-#' @param obj An object of "Experiment" class
-#' @param add Either NULL or a ggplot object
-#' @param ... Additional parameters to be passed to ggplot (color, size, alpha ...)
-#' @return A ggplot object drawing the food patches on top of whatever (if any)
-#' layer is passed to the argument add.
-setMethod('draw_FoodPatches', 'Experiment', function(obj, add = NULL, ...){
-        if(is.null(add)){
-                add <- ggplot()
-        }
-        obj <- get_foodPatches(obj)
-        
-        for(i in seq_along(obj@food[1:2])){
-                add <- add + geom_polygon(data = obj@food[[i]], aes(x, y), ...) +
-                        xlab('') + ylab('')
-                
-        }
-        add
-})
-
 #' Find food trails (according to: time from first food finding until experiment end + 90 percentile activity)
 #' 
 #' NOTE!!! There are OTHER criteria that can be apply to calculate food trails;
@@ -294,8 +273,70 @@ setMethod('food_trails', 'Experiment', function(obj){
         m <- obj@matrix
         t <- c(min(do.call('rbind', obj@food)$t), max(obj@data$Frame))
         m <- m[Frame %in% t[1]:t[2], lapply(.SD, sum), .SDcols = 'N', by = node]
-        m[N < quantile(N, prob = 0.9), N := 0]
-        obj@trails <- m
+        
+        obj@trails <- m[N > quantile(N, prob = 0.9)]$node
         obj
+})
+
+setMethod('ait', 'Experiment', function(obj, ...){
+        if(length(obj@trails) == 0){
+                obj@trails <- food_trails(obj)
+        }
+        if(nrow(obj@AiT) == 0){
+                m <- as.data.frame(get_matrix(obj, data = 0))
+                df <- data.frame(t = as.integer(rownames(m)),
+                                 N = rowSums(m),
+                                 inTrail = rowSums(m[, as.character(obj@trails)]),
+                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(obj@trails)]))
+                mlt_df <- melt(df, id.vars = 't')
+                obj@AiT <- mlt_df
+        }
+        obj
+})
+
+setMethod('iit', 'Experiment', function(obj, ...){
+        if(length(obj@trails) == 0){
+                obj@trails <- food_trails(obj)
+        }
+        if(nrow(obj@IiT) == 0){
+                m <- as.data.frame(get_matrix(obj, data = 0, t = 1:max(obj@data$Frame), type = 'interaction'))
+                df <- data.frame(t = as.integer(rownames(m)),
+                                 N = rowSums(m),
+                                 inTrail = rowSums(m[, colnames(m) %in% as.character(obj@trails)]),
+                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(obj@trails)]))
+                mlt_df <- melt(df, id.vars = 't')
+                obj@IiT <- mlt_df
+        }
+        obj
+})
+
+#### +++ VISUALIZATION METHODS +++ ####
+#' Draws the food patches
+#' 
+#' @param obj An object of "Experiment" class
+#' @param add Either NULL or a ggplot object
+#' @param ... Additional parameters to be passed to ggplot (color, size, alpha ...)
+#' @return A ggplot object drawing the food patches on top of whatever (if any)
+#' layer is passed to the argument add.
+setMethod('draw_FoodPatches', 'Experiment', function(obj, add = NULL, ...){
+        if(is.null(add)){
+                add <- ggplot()
+        }
+        obj <- get_fp(obj)
+        
+        for(i in seq_along(obj@food[1:2])){
+                f <- obj@food[[i]][chull(obj@food[[i]][, c('x', 'y')]), ]
+                add <- add + geom_polygon(data = f, aes(x, y), ...) +
+                        xlab('') + ylab('')
+                
+        }
+        add
+})
+
+setMethod('plot_trails', 'Experiment', function(obj){
+        draw_hexagons(add = draw_FoodPatches(obj, fill = 'grey50') +
+                              geom_point(data = data.frame(x = hex$x[obj@trails],
+                                                           y = hex$y[obj@trails]),
+                                         aes(x, y), fill = muted('blue'), size = 4, shape = 21))
 })
 

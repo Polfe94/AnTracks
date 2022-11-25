@@ -21,7 +21,7 @@ theme_set(ggplot2::theme_classic() + ggplot2::theme(axis.title = element_text(si
 compute_edges <- function(refcoords = hex[hex$y > 1000, ], r = 51){
      xy <- as.matrix(refcoords[, c('x', 'y')])
      
-     d <- pdist(xy, xy, ret.vec = FALSE)
+     d <- pdist(xy, xy)
      idx <- which(d < r & d > 0, arr.ind = TRUE)
      
      edges <- data.frame(x = xy[idx[, 1], 1], y = xy[idx[, 1], 2],
@@ -70,8 +70,7 @@ get_node <- function(...){
 #' 
 #' @param A A matrix of dim(N, 2)
 #' @param B A matrix of dim(N, 2)
-#' @param ret.vec A boolean indicating whether or not a vector should be returned
-#' @return A numeric vector (or matrix, if ret.vec = FALSE) of distances (in whatever unit)
+#' @return A matrix of distances of dimensions = nrow(A) X nrow(B)
 #' with length = nrow(A)*nrow(B) (or matrix with rows = nrow(A) and columns = nrow(B))
 Rcpp::cppFunction(
         '
@@ -110,7 +109,7 @@ norm_range <- function(x, a = -1, b = 1){
 #' @param y A numeric (y) coordinate
 #' @param theta A number representing an angle
 #' @return A data.frame with the rotated coordinates
-rotate.theta <- function(x, y, theta = pi/2){
+rotate <- function(x, y, theta = pi/2){
      
      if(length(x) != length(y)){
           stop("x and y need to be the same length!")
@@ -268,10 +267,9 @@ set_foodpatches <- function(patches){
      p
 }
 
-get_foodPatches <- function(...){
-     obj <- list(...)[[1]]
-     if(is.character(obj) && str_count(obj, '[0-9]') == 8 && str_count(obj, '[M, T]') == 1){
-          m <- get_metainfo(obj)
+get_foodPatches <- function(date){
+     if(is.character(date) && str_count(date, '[0-9]') == 8 && str_count(date, '[M, T]') == 1){
+          m <- get_metainfo(date)
           p <- get_food_from_metainfo(m)
           p <- set_foodpatches(p)
           p
