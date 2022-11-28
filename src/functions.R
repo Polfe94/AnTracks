@@ -319,3 +319,17 @@ get_neighbors <- function(nodes, ...){
         }
         as.integer(edges$d[edges$o == nodes])
 }
+
+moving_average <- function(x, t, overlap = 0){
+        
+        slide <- t %/% 2
+        if(overlap > slide){
+                warning('Overlap is bigger than window size. Capping overlap to window size.')
+                overlap <- slide
+        }
+        x0 <- 1 + slide
+        xn <- length(x) - slide
+        
+        l <- split(x, ceiling(seq_along(x) / (slide + overlap)))
+        
+}

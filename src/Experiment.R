@@ -86,11 +86,11 @@ setGeneric('food_trails', function(obj){
         standardGeneric('food_trails')
 })
 
-setGeneric('ait', function(obj, ...){
+setGeneric('ait', function(obj){
         standardGeneric('ait')
 })
 
-setGeneric('iit', function(obj, ...){
+setGeneric('iit', function(obj){
         standardGeneric('iit')
 })
 
@@ -100,6 +100,18 @@ setGeneric('draw_FoodPatches', function(obj, add = NULL, ...){
 
 setGeneric('plot_trails', function(obj){
         standardGeneric('plot_trails')
+})
+
+setGeneric('plot_AiT', function(obj, rectangle_params = list(fill = muted('green'),
+                                                             color = 'green', 
+                                                             alpha = 0.15, linetype = 2, size = 1)){
+        standardGeneric('plot_AiT')
+})
+
+setGeneric('plot_IiT', function(obj, rectangle_params = list(fill = muted('green'),
+                                                             color = 'green', 
+                                                             alpha = 0.15, linetype = 2, size = 1)){
+        standardGeneric('plot_IiT')
 })
 
 #### +++ CLASS METHODS +++ ####
@@ -155,8 +167,8 @@ setMethod('interaction_matrix', 'Experiment', function(obj){
         if(nrow(obj@interactions) == 0){
                 obj <- compute_nodes(obj)
                 dt <- data.table(obj@data[, c('Frame', 'node', 'Crossings')])
-                m <- dt[Crossings > 0, N := .N > 0, by = c('node', 'Frame')]
-                
+                m <- unique(dt[Crossings > 0, ])
+                m$N <- 1
                 obj@interactions <- m[, c('Frame', 'node', 'N')]
         }
         obj
@@ -223,17 +235,18 @@ setMethod('get_fp', 'Experiment', function(obj){
 
 setMethod('food_detection', 'Experiment', function(obj){
         if(!length(obj@food) | length(obj@food) == 0){
-                obj <- get_foodPatches(obj)
+                obj <- get_fp(obj)
         }
         if('t' %in% colnames(obj@food[[1]])){
                 return(obj)
         }
         
         food <- data.table(do.call('rbind', obj@food[1:2]))[, node := mapply(get_node, x, y)]
+        food$GP <- c(rep(1, 6), rep(2, 6))
         xy <- data.table(obj@data)[node %in% food$node, lapply(.SD, min), .SDcols = c('Frame'), by = node]
         mrgd <- merge(food, xy)
-        df <- data.frame(x = mrgd$x, y = mrgd$y, t = mrgd$Frame)
-        food <- list(GP1 = df[1:6, ], GP2 = df[7:12, ])
+        df <- data.frame(x = mrgd$x, y = mrgd$y, t = mrgd$Frame, GP = mrgd$GP)
+        food <- list(GP1 = df[df$GP == 1, c('x', 'y', 't')], GP2 = df[df$GP == 2, c('x', 'y', 't')])
         obj@food <- food
         obj
 })
@@ -279,7 +292,7 @@ setMethod('food_trails', 'Experiment', function(obj){
         obj
 })
 
-setMethod('ait', 'Experiment', function(obj, ...){
+setMethod('ait', 'Experiment', function(obj){
         if(length(obj@trails) == 0){
                 obj@trails <- food_trails(obj)
         }
@@ -295,7 +308,7 @@ setMethod('ait', 'Experiment', function(obj, ...){
         obj
 })
 
-setMethod('iit', 'Experiment', function(obj, ...){
+setMethod('iit', 'Experiment', function(obj){
         if(length(obj@trails) == 0){
                 obj@trails <- food_trails(obj)
         }
@@ -341,3 +354,59 @@ setMethod('plot_trails', 'Experiment', function(obj){
                                          aes(x, y), fill = muted('blue'), size = 4, shape = 21))
 })
 
+setMethod('plot_AiT', 'Experiment', function(obj, 
+                                             rectangle_params = list(fill = muted('green'),
+                                             color = 'green', alpha = 0.15, linetype = 2, size = 1)){
+        obj <- ait(obj)
+        
+        df <- obj@AiT
+        food <- obj@food
+        
+        
+        
+        ylim <- c(0, 0, rep(max(df$value), 2))
+        xlim <- range(do.call('rbind', food)$t)[c(1:2, 2:1)]/120
+
+        pl <- ggplot(data = df, aes(t/120, value, color = variable))+
+                geom_line() + scale_y_continuous('', breaks = seq(0, max(ylim), 5)) +
+                scale_color_viridis_d('', labels = c('Total activity', 'Activity in trail', 'Activity out trail'))+
+                scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
+
+        rectangle_params$data <- data.frame(x = xlim, y = ylim)
+        rectangle_params$mapping <- aes(x, y)
+        
+        pl <- pl + do.call('geom_polygon', args = rectangle_params) +
+                guides(color = guide_legend(override.aes = list(size = 2)))
+        
+        pl
+})
+
+setMethod('plot_IiT', 'Experiment', function(obj, 
+                                             rectangle_params = list(fill = muted('green'),
+                                                                     color = 'green', alpha = 0.15,
+                                                                     linetype = 2, size = 1)){
+        obj <- iit(obj)
+        
+        df <- obj@IiT
+        for(i in unique(df$variable)){
+                df$value[df$variable == i] <- cumsum(df$value[df$variable == i])
+        }
+        food <- obj@food
+        
+        ylim <- c(0, 0, rep(max(df$value), 2))
+        xlim <- range(do.call('rbind', food)$t)[c(1:2, 2:1)]/120
+        
+        pl <- ggplot(data = df, aes(t/120, value, color = variable))+
+                geom_line() + scale_y_continuous('', breaks = seq(0, max(ylim), max(ylim) %/% 8)) +
+                scale_color_viridis_d('', labels = c('Total interactions', 'Interactions in trail', 
+                                                     'Interactions out trail'))+
+                scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
+        
+        rectangle_params$data <- data.frame(x = xlim, y = ylim)
+        rectangle_params$mapping <- aes(x, y)
+        
+        pl <- pl + do.call('geom_polygon', args = rectangle_params) +
+                guides(color = guide_legend(override.aes = list(size = 2)))
+        
+        pl
+})
