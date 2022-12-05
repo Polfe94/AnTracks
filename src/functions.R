@@ -330,6 +330,16 @@ moving_average <- function(x, t, overlap = 0){
         x0 <- 1 + slide
         xn <- length(x) - slide
         
-        l <- split(x, ceiling(seq_along(x) / (slide + overlap)))
+        sq <- seq(x0, xn, (slide - overlap + 1))
+        v <- vapply(sq, function(i){
+                mean(x[seq(i-slide, i+slide)])
+        }, numeric(1))
         
+        # fill in start and finish positions
+        if(overlap == slide){
+                c(x[1:slide], v, x[(xn+1):length(x)])
+        } else {
+                v
+        }
+
 }

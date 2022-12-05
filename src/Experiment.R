@@ -397,9 +397,10 @@ setMethod('plot_IiT', 'Experiment', function(obj,
         xlim <- range(do.call('rbind', food)$t)[c(1:2, 2:1)]/120
         
         pl <- ggplot(data = df, aes(t/120, value, color = variable))+
-                geom_line() + scale_y_continuous('', breaks = seq(0, max(ylim), max(ylim) %/% 8)) +
+                geom_line(size = 1.2) + scale_y_continuous('', breaks = seq(0, max(ylim), max(ylim) %/% 8)) +
                 scale_color_viridis_d('', labels = c('Total interactions', 'Interactions in trail', 
-                                                     'Interactions out trail'))+
+                                                     'Interactions out trail'),
+                                      end = 0.85)+
                 scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
         
         rectangle_params$data <- data.frame(x = xlim, y = ylim)
