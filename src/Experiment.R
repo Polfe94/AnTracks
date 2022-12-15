@@ -30,20 +30,45 @@ setClass('Experiment', representation(
         interactions = 'data.frame',
         refcoords = 'data.frame',
         r = 'numeric',
-        # edges = 'data.frame', 
-        # local_cov = 'numeric',
         date = 'character', 
         food = 'list', 
         N = 'numeric',
         I = 'numeric',
         connectivity = 'numeric',
-        trails = 'numeric',
+        trails = 'integer',
+        nest = 'integer', 
         AiT = 'data.frame',
-        IiT = 'data.frame'
+        IiT = 'data.frame',
+        .__classVersion__ = 'character'
 ), prototype = list(
         r = 51,
-        refcoords = hex[hex$y > 1000, ]
+        refcoords = hex[hex$y > 1000, ],
+        nest = nest_influence(r = 101), 
+        .__classVersion__ = '1.0'
 ))
+
+setGeneric('updateObject', function(obj){
+        standardGeneric('updateObject')
+})
+
+setMethod('updateObject', 'Experiment', function(obj){
+        if(.hasSlot(obj, '.__classVersion__') && obj@.__classVersion__ == '1.0'){
+                return(obj)
+        } else {
+                attrs <- getSlots('Experiment')
+                slots <- list(Class = 'Experiment')
+                for(i in names(attrs)){
+                        if(.hasSlot(obj, i)){
+                                x <- slot(obj, i)
+                                if(attrs[i] %in% class(x)){
+                                        slots[[i]] <- x
+                                }
+                        }
+                }
+                obj <- do.call('new', args = slots)
+                obj
+        }
+})
 
 #### +++ GENERIC FUNCTIONS +++ ####
 setGeneric('compute_nodes', function(obj){
