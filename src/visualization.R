@@ -9,8 +9,11 @@
 #' @return A ggplot object drawing the hexagonal lattice on top of whatever (if any)
 #' layer is passed to the argument add. The colour of the hexagons will be based on
 #' the values provided in \code{z} (if any, black otherwise).
-draw_hexagons <- function(refcoords = hex[hex$y > 1000, ], add = NULL, z = NULL, ...){
-     segments <- compute_edges(refcoords)
+draw_hexagons <- function(edges = NULL, add = NULL, z = NULL, ...){
+        if(is.null(edges)){
+                edges <- compute_edges(hex[hex$y > 1000, ])
+        }
+
      if(!is.null(add)){
           pl <- add
      } else {
@@ -18,10 +21,10 @@ draw_hexagons <- function(refcoords = hex[hex$y > 1000, ], add = NULL, z = NULL,
      }
      
      if(!is.null(z)){
-          pl <- pl + geom_segment(data = segments, 
+          pl <- pl + geom_segment(data = edges, 
                                   aes(x = x, xend = xend, y = y, yend = yend, color = z), ...)
      } else {
-          pl <- pl + geom_segment(data = segments, aes(x = x, xend = xend, y = y, yend = yend), ...)
+          pl <- pl + geom_segment(data = edges, aes(x = x, xend = xend, y = y, yend = yend), ...)
      }
      pl + xlab('') + ylab('') + theme(axis.text = element_blank(), axis.ticks = element_blank(),
                                       axis.line = element_blank())

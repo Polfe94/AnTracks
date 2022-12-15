@@ -91,7 +91,10 @@ NumericMatrix pdist(NumericMatrix A, NumericMatrix B) {
      return wrap(sqrt(C)); 
 }', c('Rcpp', 'RcppArmadillo'))
 
-
+nest_influence <- function(r = 101){
+        idx <- inRadius(hex[, c('x', 'y')], as.numeric(hex[663, c('x', 'y')]), r)
+        hex$node[idx]
+}
 
 #' Normalizes a numeric vector to fit in a given range
 #' 
@@ -317,7 +320,75 @@ get_neighbors <- function(nodes, ...){
                         edges <<- compute_edges()
                 }
         }
-        as.integer(edges$d[edges$o == nodes])
+        as.integer(edges$d[edges$o %in% nodes])
+}
+
+optimal_path <- function(start, target, refcoords = hex[hex$y > 1000, ], r = 51){
+        
+        edges <- compute_edges(refcoords, r)
+        
+        x1 <- as.matrix(refcoords[refcoords$node == start, c('x', 'y')])
+        x2 <- as.matrix(refcoords[refcoords$node == target, c('x', 'y')])
+        
+        path <- start
+        pos <- start
+        
+        while(pos != target){
+                
+                available_positions <- get_neighbors(pos, edges = edges)
+                distances <- pdist(as.matrix(refcoords[refcoords$node %in% available_positions, c('x', 'y')]), x2)
+                idx <- which.min(distances)
+                pos <- available_positions[idx]
+                path <- c(path , pos)
+                
+        }
+        unique(path)
+}
+
+possible_paths <- function(start, target, refcoords = hex[hex$y > 1000, ], r = 51){
+        
+        edges <- compute_edges(refcoords, r)
+        
+        x1 <- as.matrix(refcoords[refcoords$node == start, c('x', 'y')])
+        x2 <- as.matrix(refcoords[refcoords$node == target, c('x', 'y')])
+        
+        d <- pdist(x1, x2)
+        
+        paths <- data.table(node = start, t = 1)
+        
+        current_origin <- start
+        current_distances <- d
+        future_origins <- c()
+        future_distances <- c()
+        
+        i <- 2
+        iters <- 0
+        
+        while(TRUE){
+                
+                for(pos in seq_along(current_origin)){
+                        available_positions <- get_neighbors(current_origin[pos], edges = edges)
+                        distances <- pdist(as.matrix(refcoords[refcoords$node %in% available_positions, c('x', 'y')]), x2)
+                        idx <- which(distances < current_distances[pos])
+                        
+                        if(length(idx)){
+                                future_origins <- c(future_origins, available_positions[idx])
+                                future_distances <- c(future_distances, distances[idx])
+                        }
+                        
+                }
+                if(length(future_origins)){
+                        paths <- rbind(paths, data.table(node = future_origins, t = i))
+                        current_origin <- future_origins
+                        current_distances <- future_distances
+                        future_origins <- c()
+                        future_distances <- c()
+                        i <- i + 1
+                } else {
+                        break
+                }
+        }
+        unique(paths$node)
 }
 
 moving_average <- function(x, t, overlap = 0){

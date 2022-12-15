@@ -86,6 +86,10 @@ setGeneric('food_trails', function(obj){
         standardGeneric('food_trails')
 })
 
+setGeneric('optimal_food_trails', function(obj){
+        standardGeneric('optimal_food_trails')
+})
+
 setGeneric('ait', function(obj){
         standardGeneric('ait')
 })
@@ -108,7 +112,7 @@ setGeneric('plot_AiT', function(obj, rectangle_params = list(fill = muted('green
         standardGeneric('plot_AiT')
 })
 
-setGeneric('plot_IiT', function(obj, rectangle_params = list(fill = muted('green'),
+setGeneric('plot_IiT', function(obj, norm = FALSE, rectangle_params = list(fill = muted('green'),
                                                              color = 'green', 
                                                              alpha = 0.15, linetype = 2, size = 1)){
         standardGeneric('plot_IiT')
@@ -292,6 +296,22 @@ setMethod('food_trails', 'Experiment', function(obj){
         obj
 })
 
+setMethod('optimal_food_trails', 'Experiment', function(obj){
+        targets <- c(get_node(obj@food[[1]][, 1:2]), get_node(obj@food[[2]][, 1:2]))
+        origins <- nest_influence(r = 101)
+        # origins <- origins[origins %in% hex$node[hex$y > 1030]]
+        
+        nodes <- c()
+        for(i in seq_along(origins)){
+                for(j in seq_along(targets)){
+                        nodes <- c(nodes, optimal_path(origins[i], targets[j]))
+                }
+        }
+        nest <- nest_influence(r = 199)
+        obj@trails <- unique(c(nodes, nest[nest %in% hex$node[hex$y > 1030]]))
+        obj
+})
+
 setMethod('ait', 'Experiment', function(obj){
         if(length(obj@trails) == 0){
                 obj@trails <- food_trails(obj)
@@ -381,23 +401,33 @@ setMethod('plot_AiT', 'Experiment', function(obj,
         pl
 })
 
-setMethod('plot_IiT', 'Experiment', function(obj, 
+setMethod('plot_IiT', 'Experiment', function(obj, norm = FALSE,
                                              rectangle_params = list(fill = muted('green'),
                                                                      color = 'green', alpha = 0.15,
                                                                      linetype = 2, size = 1)){
         obj <- iit(obj)
         
         df <- obj@IiT
-        for(i in unique(df$variable)){
-                df$value[df$variable == i] <- cumsum(df$value[df$variable == i])
+        if(norm){
+                for(i in unique(df$variable)){
+                        y <- cumsum(df$value[df$variable == i])
+                        df$value[df$variable == i] <- norm_range(y, 0, 1)
+                }
+                ybrks <- 1/5
+        } else {
+                for(i in unique(df$variable)){
+                        df$value[df$variable == i] <- cumsum(df$value[df$variable == i])
+                }
+                ybrks <- max(df$value) %/% 8
         }
+
         food <- obj@food
         
         ylim <- c(0, 0, rep(max(df$value), 2))
         xlim <- range(do.call('rbind', food)$t)[c(1:2, 2:1)]/120
         
         pl <- ggplot(data = df, aes(t/120, value, color = variable))+
-                geom_line(size = 1.2) + scale_y_continuous('', breaks = seq(0, max(ylim), max(ylim) %/% 8)) +
+                geom_line(size = 1.2) + scale_y_continuous('', breaks = seq(0, max(ylim), ybrks)) +
                 scale_color_viridis_d('', labels = c('Total interactions', 'Interactions in trail', 
                                                      'Interactions out trail'),
                                       end = 0.85)+
