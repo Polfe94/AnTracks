@@ -290,6 +290,9 @@ M2M <- function(DT, data, maxt = NULL){
         if(is.null(maxt)){
                 maxt <- max(DT$Frame)
         }
+        if(is.data.frame(DT) && !is.data.table(DT)){
+                DT <- data.table(DT)
+        }
      M <- DT[CJ(Frame = seq_len(maxt), node = node, unique = T), on=. (Frame, node)]
      M$N[is.na(M$N)] <- data
      M

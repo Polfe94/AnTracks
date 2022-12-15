@@ -115,11 +115,11 @@ setGeneric('optimal_food_trails', function(obj){
         standardGeneric('optimal_food_trails')
 })
 
-setGeneric('ait', function(obj){
+setGeneric('ait', function(obj, include_nest = FALSE){
         standardGeneric('ait')
 })
 
-setGeneric('iit', function(obj){
+setGeneric('iit', function(obj, include_nest = FALSE){
         standardGeneric('iit')
 })
 
@@ -337,35 +337,56 @@ setMethod('optimal_food_trails', 'Experiment', function(obj){
         obj
 })
 
-setMethod('ait', 'Experiment', function(obj){
+setMethod('ait', 'Experiment', function(obj, include_nest = FALSE){
         if(length(obj@trails) == 0){
                 obj@trails <- food_trails(obj)
         }
-        if(nrow(obj@AiT) == 0){
-                m <- as.data.frame(get_matrix(obj, data = 0))
+
+        m <- as.data.frame(get_matrix(obj, data = 0))
+        if(include_nest){
+                
+                trails <- obj@trails[!obj@trails %in% obj@nest]
+                df <- data.frame(t = as.integer(rownames(m)),
+                                 N = rowSums(m),
+                                 inTrail = rowSums(m[, colnames(m) %in% as.character(trails)]),
+                                 nest = rowSums(m[, as.character(obj@nest)]),
+                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(obj@trails)]))
+        } else {
                 df <- data.frame(t = as.integer(rownames(m)),
                                  N = rowSums(m),
                                  inTrail = rowSums(m[, as.character(obj@trails)]),
                                  outTrail = rowSums(m[, !colnames(m) %in% as.character(obj@trails)]))
-                mlt_df <- melt(df, id.vars = 't')
-                obj@AiT <- mlt_df
         }
+        
+        mlt_df <- melt(df, id.vars = 't')
+        obj@AiT <- mlt_df
+
         obj
 })
 
-setMethod('iit', 'Experiment', function(obj){
+setMethod('iit', 'Experiment', function(obj, include_nest = FALSE){
         if(length(obj@trails) == 0){
                 obj@trails <- food_trails(obj)
         }
-        if(nrow(obj@IiT) == 0){
-                m <- as.data.frame(get_matrix(obj, data = 0, t = 1:max(obj@data$Frame), type = 'interaction'))
+
+        m <- as.data.frame(get_matrix(obj, data = 0, t = 1:max(obj@data$Frame), type = 'interaction'))
+        if(include_nest){
+                trails <- as.character(obj@trails[!obj@trails %in% obj@nest])
+                df <- data.frame(t = as.integer(rownames(m)),
+                                 N = rowSums(m),
+                                 inTrail = rowSums(m[, colnames(m) %in% as.character(trails)]),
+                                 nest = rowSums(m[, colnames(m) %in% as.character(obj@nest)]),
+                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(obj@trails)]))
+        } else {
                 df <- data.frame(t = as.integer(rownames(m)),
                                  N = rowSums(m),
                                  inTrail = rowSums(m[, colnames(m) %in% as.character(obj@trails)]),
                                  outTrail = rowSums(m[, !colnames(m) %in% as.character(obj@trails)]))
-                mlt_df <- melt(df, id.vars = 't')
-                obj@IiT <- mlt_df
         }
+
+        mlt_df <- melt(df, id.vars = 't')
+        obj@IiT <- mlt_df
+
         obj
 })
 
@@ -402,20 +423,27 @@ setMethod('plot_trails', 'Experiment', function(obj){
 setMethod('plot_AiT', 'Experiment', function(obj, 
                                              rectangle_params = list(fill = muted('green'),
                                              color = 'green', alpha = 0.15, linetype = 2, size = 1)){
-        obj <- ait(obj)
-        
         df <- obj@AiT
         food <- obj@food
-        
-        
         
         ylim <- c(0, 0, rep(max(df$value), 2))
         xlim <- range(do.call('rbind', food)$t)[c(1:2, 2:1)]/120
 
-        pl <- ggplot(data = df, aes(t/120, value, color = variable))+
-                geom_line() + scale_y_continuous('', breaks = seq(0, max(ylim), 5)) +
-                scale_color_viridis_d('', labels = c('Total activity', 'Activity in trail', 'Activity out trail'))+
-                scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
+        if(length(levels(df$variable)) == 4){
+                pl <- ggplot(data = df, aes(t/120, value, color = variable))+
+                        geom_line() + scale_y_continuous('', breaks = seq(0, max(ylim), 5)) +
+                        scale_color_viridis_d('', labels = c('Total activity', 'Activity in trail',
+                                                             'Activity in nest',
+                                                             'Activity out trail'))+
+                        scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
+        } else {
+                pl <- ggplot(data = df, aes(t/120, value, color = variable))+
+                        geom_line() + scale_y_continuous('', breaks = seq(0, max(ylim), 5)) +
+                        scale_color_viridis_d('', labels = c('Total activity', 'Activity in trail',
+                                                             'Activity out trail'))+
+                        scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
+        }
+
 
         rectangle_params$data <- data.frame(x = xlim, y = ylim)
         rectangle_params$mapping <- aes(x, y)
@@ -430,7 +458,6 @@ setMethod('plot_IiT', 'Experiment', function(obj, norm = FALSE,
                                              rectangle_params = list(fill = muted('green'),
                                                                      color = 'green', alpha = 0.15,
                                                                      linetype = 2, size = 1)){
-        obj <- iit(obj)
         
         df <- obj@IiT
         if(norm){
@@ -438,12 +465,12 @@ setMethod('plot_IiT', 'Experiment', function(obj, norm = FALSE,
                         y <- cumsum(df$value[df$variable == i])
                         df$value[df$variable == i] <- norm_range(y, 0, 1)
                 }
-                ybrks <- 1/5
+                # ybrks <- 1/5
         } else {
                 for(i in unique(df$variable)){
                         df$value[df$variable == i] <- cumsum(df$value[df$variable == i])
                 }
-                ybrks <- max(df$value) %/% 8
+                # ybrks <- max(df$value) %/% 8
         }
 
         food <- obj@food
@@ -451,12 +478,24 @@ setMethod('plot_IiT', 'Experiment', function(obj, norm = FALSE,
         ylim <- c(0, 0, rep(max(df$value), 2))
         xlim <- range(do.call('rbind', food)$t)[c(1:2, 2:1)]/120
         
-        pl <- ggplot(data = df, aes(t/120, value, color = variable))+
-                geom_line(size = 1.2) + scale_y_continuous('', breaks = seq(0, max(ylim), ybrks)) +
-                scale_color_viridis_d('', labels = c('Total interactions', 'Interactions in trail', 
-                                                     'Interactions out trail'),
-                                      end = 0.85)+
-                scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
+        
+        if(length(levels(df$variable)) == 4){
+                pl <- ggplot(data = df, aes(t/120, value, color = variable))+
+                        geom_line(size = 1.2) + scale_y_continuous('', breaks = seq(0, max(ylim), length.out = 6)) +
+                        scale_color_viridis_d('', labels = c('Total interactions', 'Interactions in trail',
+                                                             'Interactions in nest',
+                                                             'Interactions out trail'),
+                                              end = 0.85)+
+                        scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
+        } else {
+                pl <- ggplot(data = df, aes(t/120, value, color = variable))+
+                        geom_line(size = 1.2) + scale_y_continuous('', breaks = seq(0, max(ylim), length.out = 9)) +
+                        scale_color_viridis_d('', labels = c('Total interactions', 'Interactions in trail', 
+                                                             'Interactions out trail'),
+                                              end = 0.85)+
+                        scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
+        }
+
         
         rectangle_params$data <- data.frame(x = xlim, y = ylim)
         rectangle_params$mapping <- aes(x, y)
