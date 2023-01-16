@@ -131,15 +131,11 @@ setGeneric('plot_trails', function(obj){
         standardGeneric('plot_trails')
 })
 
-setGeneric('plot_AiT', function(obj, rectangle_params = list(fill = muted('green'),
-                                                             color = 'green', 
-                                                             alpha = 0.15, linetype = 2, size = 1)){
+setGeneric('plot_AiT', function(obj, ...){
         standardGeneric('plot_AiT')
 })
 
-setGeneric('plot_IiT', function(obj, norm = FALSE, rectangle_params = list(fill = muted('green'),
-                                                             color = 'green', 
-                                                             alpha = 0.15, linetype = 2, size = 1)){
+setGeneric('plot_IiT', function(obj, norm = FALSE, ...){
         standardGeneric('plot_IiT')
 })
 
@@ -420,14 +416,14 @@ setMethod('plot_trails', 'Experiment', function(obj){
                                          aes(x, y), fill = muted('blue'), size = 4, shape = 21))
 })
 
-setMethod('plot_AiT', 'Experiment', function(obj, 
-                                             rectangle_params = list(fill = muted('green'),
-                                             color = 'green', alpha = 0.15, linetype = 2, size = 1)){
+setMethod('plot_AiT', 'Experiment', function(obj, ...){
+        
         df <- obj@AiT
         food <- obj@food
         
         ylim <- c(0, 0, rep(max(df$value), 2))
-        xlim <- range(do.call('rbind', food)$t)[c(1:2, 2:1)]/120
+        t <- do.call('rbind', food)$t / 120
+        xlim <- range(t[c(1:2, 2:1)])
 
         if(length(levels(df$variable)) == 4){
                 pl <- ggplot(data = df, aes(t/120, value, color = variable))+
@@ -444,20 +440,11 @@ setMethod('plot_AiT', 'Experiment', function(obj,
                         scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
         }
 
-
-        rectangle_params$data <- data.frame(x = xlim, y = ylim)
-        rectangle_params$mapping <- aes(x, y)
-        
-        pl <- pl + do.call('geom_polygon', args = rectangle_params) +
+        pl + geom_food(t = t, ylim = range(ylim), ...) +
                 guides(color = guide_legend(override.aes = list(size = 2)))
-        
-        pl
 })
 
-setMethod('plot_IiT', 'Experiment', function(obj, norm = FALSE,
-                                             rectangle_params = list(fill = muted('green'),
-                                                                     color = 'green', alpha = 0.15,
-                                                                     linetype = 2, size = 1)){
+setMethod('plot_IiT', 'Experiment', function(obj, norm = FALSE, ...){
         
         df <- obj@IiT
         if(norm){
@@ -472,11 +459,12 @@ setMethod('plot_IiT', 'Experiment', function(obj, norm = FALSE,
                 }
                 # ybrks <- max(df$value) %/% 8
         }
-
-        food <- obj@food
         
+        food <- obj@food
+
         ylim <- c(0, 0, rep(max(df$value), 2))
-        xlim <- range(do.call('rbind', food)$t)[c(1:2, 2:1)]/120
+        t <- do.call('rbind', food)$t / 120
+        xlim <- range(t[c(1:2, 2:1)])
         
         
         if(length(levels(df$variable)) == 4){
@@ -495,13 +483,7 @@ setMethod('plot_IiT', 'Experiment', function(obj, norm = FALSE,
                                               end = 0.85)+
                         scale_x_continuous('Time (min)', breaks = seq(0, 180, 15))
         }
-
         
-        rectangle_params$data <- data.frame(x = xlim, y = ylim)
-        rectangle_params$mapping <- aes(x, y)
-        
-        pl <- pl + do.call('geom_polygon', args = rectangle_params) +
+        pl + geom_food(t = t, ylim = range(ylim), ...) +
                 guides(color = guide_legend(override.aes = list(size = 2)))
-        
-        pl
 })

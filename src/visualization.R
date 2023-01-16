@@ -60,3 +60,36 @@ geom_circle <- function(center, r, npoints = 100, ...){
      }
      
 }
+
+geom_food <- function(t,  
+                      rectangle_params = list(fill = muted('green'),
+                                              color = 'green', 
+                                              alpha = 0.15, linetype = 2, size = 1),
+                      complete = FALSE, ylim = c(-Inf, Inf)){
+        
+        ylim <- sort(ylim)
+        trange <- range(t)
+        
+        rectangle_params$data <- data.frame(x = c(trange[1], trange[1], trange[2], trange[2]),
+                                            y = c(ylim[1], ylim[2], ylim[2], ylim[1]))
+        rectangle_params$mapping <- aes(x, y)
+        
+        rectangle_geom <- do.call('geom_polygon', args = rectangle_params)
+        
+        if(complete){
+                segment_params <- rectangle_params
+                segment_params$fill <- NULL
+                segment_params$alpha <- 1
+                segment_params$size <- 0.5
+                segment_params$data <- data.frame(x = t[t > trange[1] & t < trange[2]],
+                                                  y = ylim[1], yend = ylim[2])
+                
+                segment_params$mapping <- aes(x = x, xend = x, y = y, yend = yend)
+                
+                food_geom <- do.call('geom_segment', args = segment_params)
+                
+                return(list(rectangle_geom, food_geom))
+        }
+        
+        rectangle_geom
+}
