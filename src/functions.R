@@ -417,3 +417,32 @@ moving_average <- function(x, t, overlap = 0){
         }
 
 }
+
+## Calculate nest entry and departure rates over time ##
+alpha <- function(jsonexp, min_time = 0, min_length = 0){
+        x <- numeric(21600)
+        y <- numeric(21600)
+        
+        for(id in seq_along(jsonexp)){
+                
+                l <- length(jsonexp[[id]])
+                mint <- jsonexp[[id]][[1]][[1]]
+                maxt <- jsonexp[[id]][[l]][[1]]
+                
+                if(l > min_length && maxt > (mint + min_time)){
+                        
+                        if(maxt > 21600){
+                                maxt <- 21600
+                        }
+                        if(mint > 21600){
+                                mint <- 21600
+                        }
+                        x[mint] <- x[mint] + 1
+                        y[maxt] <- y[maxt] + 1
+                }
+                
+        }
+        
+        data.frame(x = x, y = y)
+        
+}
