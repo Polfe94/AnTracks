@@ -24,6 +24,10 @@ compute_edges <- function(refcoords = hex[hex$y > 1000, ], r = 51){
      d <- pdist(xy, xy)
      idx <- which(d < r & d > 0, arr.ind = TRUE)
      
+     # get rid of duplicated indices due to square matrix
+     idx <- t(apply(idx, 1, sort)) 
+     idx <- unique(idx)
+     
      edges <- data.frame(x = xy[idx[, 1], 1], y = xy[idx[, 1], 2],
                                 xend = xy[idx[, 2], 1], yend = xy[idx[, 2], 2],
                                 o = refcoords$node[idx[, 1]], d = refcoords$node[idx[, 2]])
