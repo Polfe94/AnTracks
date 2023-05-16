@@ -33,6 +33,80 @@ compute_edges <- function(refcoords = hex[hex$y > 1000, ], r = 51){
                                 o = refcoords$node[idx[, 1]], d = refcoords$node[idx[, 2]])
      data.table(edges)
 }
+## OLD FUNCTION
+# get_direction <- function(n0, n1){
+#         
+#         if(n0 == n1){
+#                 return('none')
+#         }
+#         x0 <- hex[hex$node == n0, c('x', 'y')]
+#         x1 <- hex[hex$node == n1, c('x', 'y')]
+# 
+#         if(x0$x < x1$x){
+#                 return('right')
+#         } else if (x0$x > x1$x){
+#                 return('left')
+#         } else {
+#                 if(x0$y < x1$y){
+#                         return('up')
+#                 } else {
+#                         return('down')
+#                 }
+#         }
+# }
+
+#' @param x must be a list of three 2D coordinates (x0, x1, x2)
+get_direction <- function(x){
+        
+        if(all(x[[3]] == x[[1]])){
+                last_move <- 0
+        } else if (x[[3]][2] < x[[1]][2] & x[[3]][1] > x[[1]][1]){
+                if(x[[3]][1] > x[[2]][1]){
+                        last_move <- -1
+                } else {
+                        last_move <- 1
+                }
+                
+        } else if (x[[3]][2] > x[[1]][2] & x[[3]][1] < x[[1]][1]){
+                if (x[[3]][1] == x[[2]][1]){
+                        last_move <- 1
+                } else {
+                        last_move <- -1
+                }
+                
+        } else if(x[[3]][2] < x[[1]][2] & x[[3]][1] < x[[1]][1]){
+                if (x[[3]][1] < x[[2]][1]){
+                        last_move <- 1
+                } else {
+                        last_move <- -1
+                }
+                
+        } else if (x[[3]][2] > x[[1]][2] & x[[3]][1] > x[[1]][1]){
+                if(x[[3]][1] == x[[2]][1]){
+                        last_move <- -1
+                } else {
+                        last_move <- 1
+                }
+        } else {
+                if (x[[3]][2] == x[[1]][2] & x[[3]][1] > x[[1]][1]){
+                        if (x[[2]][2] > x[[3]][2]){
+                                last_move <- 1
+                        } else {
+                                last_move <- -1
+                        }
+                } else if (x[[3]][2] == x[[1]][2] & x[[3]][1] < x[[1]][1]){
+                        if (x[[2]][2] > x[[3]][2]){
+                                last_move <- -1
+                        } else {
+                                last_move <- 1
+                        }
+                } else {
+                        warning('Unexpected scenario')
+                        last_move <- NA
+                }
+        }
+        last_move
+}
 
 #' Returns the closest node to the provided coordinate
 #' 
@@ -327,7 +401,8 @@ get_neighbors <- function(nodes, ...){
                         edges <<- compute_edges()
                 }
         }
-        as.integer(edges$d[edges$o %in% nodes])
+        neighbors <- unlist(unique(edges[edges$o %in% nodes | edges$d %in% nodes, c('o', 'd')]))
+        as.integer(neighbors[neighbors != nodes])
 }
 
 optimal_path <- function(start, target, refcoords = hex[hex$y > 1000, ], r = 51){
