@@ -33,27 +33,6 @@ compute_edges <- function(refcoords = hex[hex$y > 1000, ], r = 51){
                                 o = refcoords$node[idx[, 1]], d = refcoords$node[idx[, 2]])
      data.table(edges)
 }
-## OLD FUNCTION
-# get_direction <- function(n0, n1){
-#         
-#         if(n0 == n1){
-#                 return('none')
-#         }
-#         x0 <- hex[hex$node == n0, c('x', 'y')]
-#         x1 <- hex[hex$node == n1, c('x', 'y')]
-# 
-#         if(x0$x < x1$x){
-#                 return('right')
-#         } else if (x0$x > x1$x){
-#                 return('left')
-#         } else {
-#                 if(x0$y < x1$y){
-#                         return('up')
-#                 } else {
-#                         return('down')
-#                 }
-#         }
-# }
 
 #' @param x must be a list of three 2D coordinates (x0, x1, x2)
 get_direction <- function(x){
@@ -524,4 +503,23 @@ alpha <- function(jsonexp, min_time = 0, min_length = 0){
         
         data.frame(x = x, y = y)
         
+}
+
+## function to load output from (python) model simulations
+read_ModelOutput <- function(path, verbose = TRUE){
+        
+        files <- list.files(path)
+        files <- files[grepl('.json', files)]
+        
+        sims <- vector('list', length(files))
+        
+        for(i in seq_along(sims)){
+                dir <- paste0(path, files[i])
+                sims[[i]] <- data.table::setDT(RJSONIO::fromJSON(dir, nullValue = NA)[1:5])
+                if(verbose){
+                        cat('\r Progress =', round(100*i/length(sims)), '%')
+                        flush.console()
+                }
+        }
+        sims
 }
