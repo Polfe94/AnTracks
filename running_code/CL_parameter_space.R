@@ -23,4 +23,5 @@ for(i in seq_along(files)){
 dt <- data.table::setDT(df)
 dt_avg <- dt[, lapply(.SD, mean), .SDcols = c('Si', 'vSi'), by = c('alpha', 'beta')]
 
+save(dt, file = paste0(path, 'phase_space_data.RData'))
 save(dt_avg, file = paste0(path, 'phase_space_summary.RData'))
