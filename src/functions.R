@@ -504,22 +504,3 @@ alpha <- function(jsonexp, min_time = 0, min_length = 0){
         data.frame(x = x, y = y)
         
 }
-
-## function to load output from (python) model simulations
-read_ModelOutput <- function(path, verbose = TRUE){
-        
-        files <- list.files(path)
-        files <- files[grepl('.json', files)]
-        
-        sims <- vector('list', length(files))
-        
-        for(i in seq_along(sims)){
-                dir <- paste0(path, files[i])
-                sims[[i]] <- data.table::setDT(RJSONIO::fromJSON(dir, nullValue = NA)[1:5])
-                if(verbose){
-                        cat('\r Progress =', round(100*i/length(sims)), '%')
-                        flush.console()
-                }
-        }
-        sims
-}
