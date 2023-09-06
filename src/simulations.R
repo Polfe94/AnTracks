@@ -41,6 +41,26 @@ read_gainsOutput <- function(path, verbose = TRUE){
 	rbindlist(sims, idcol = TRUE)
 }
 
+## function to load output from (python) gain model simulations
+read_FilteredOutput <- function(path, filter = 'gain', verbose = TRUE){
+	
+	files <- list.files(path)
+	files <- files[grepl(filter, files)]
+	
+	sims <- vector('list', length(files))
+	
+	for(i in seq_along(sims)){
+		dir <- paste0(path, files[i])
+		sims[[i]] <- data.table::setDT(RJSONIO::fromJSON(dir, nullValue = NA))
+		set(sims[[i]], j = filter, value = strsplit(gsub('.json','', files[i]), '_')[[1]][1])
+		if(verbose){
+			cat('\r Progress =', round(100*i/length(sims)), '%')
+			flush.console()
+		}
+	}
+	rbindlist(sims, idcol = TRUE)
+}
+
 align_sequences <- function(df, sim_type = 'gain'){
 	dt <- setDT(df)
 	set(dt, j = 'Frame', value = cut(dt[['T']], seq(0, 10800, 0.5), labels = F))
