@@ -372,16 +372,18 @@ get_neighbors <- function(nodes, ...){
         l <- list(...)
         if('edges' %in% names(l)){
                 edges <- l$edges
-        } 
-        if(!exists('edges', envir = .GlobalEnv)){
-                if('refcoords' %in% names(l)){
-                        edges <<- compute_edges(refcoords)
-                } else {
-                        edges <<- compute_edges()
+        } else {
+                if(!exists('edges', envir = .GlobalEnv)){
+                        if('refcoords' %in% names(l)){
+                                edges <<- compute_edges(refcoords)
+                        } else {
+                                edges <<- compute_edges()
+                        }
                 }
         }
-        neighbors <- unlist(unique(edges[edges$o %in% nodes | edges$d %in% nodes, c('o', 'd')]))
-        as.integer(neighbors[neighbors != nodes])
+
+        neighbors <- unique(unlist(edges[edges$o %in% nodes | edges$d %in% nodes, c('o', 'd')]))
+        neighbors[!neighbors %in% nodes]
 }
 
 optimal_path <- function(start, target, refcoords = hex[hex$y > 1000, ], r = 51){
@@ -476,6 +478,34 @@ moving_average <- function(x, t, overlap = 0){
 
 }
 
+# compute connectivity of the network
+connectivity <- function(nodes, ...){
+        
+        nodes <- unique(nodes[!is.na(nodes)])
+        l <- length(nodes)
+        if(l < 1){
+                return(0)
+        }
+        clusters <- c()
+        
+        while(sum(clusters) < l){
+                nodes2check <- get_neighbors(nodes[1], ...)
+                current_branch <- nodes[1]
+                nodes <- nodes[-1]
+                check <- nodes2check %in% nodes
+                while(sum(check)){
+                        nodes_in_branch <- unique(nodes2check[check])
+                        current_branch <- c(current_branch, nodes_in_branch)
+                        nodes <- nodes[!nodes %in% nodes_in_branch]
+                        nodes2check <- get_neighbors(nodes_in_branch, ...)
+                        check <- nodes2check %in% nodes
+                }
+                clusters <- c(clusters, length(current_branch))
+                current_branch <- c()
+        }
+        clusters
+}
+
 ## Calculate nest entry and departure rates over time ##
 alpha <- function(jsonexp, min_time = 0, min_length = 0){
         x <- numeric(21600)
@@ -504,3 +534,61 @@ alpha <- function(jsonexp, min_time = 0, min_length = 0){
         data.frame(x = x, y = y)
         
 }
+
+Rcpp::cppFunction('
+NumericVector fillVec(NumericVector x) {
+    for (int i = 1; i < x.size(); i++) {
+        if (NumericVector::is_na(x[i])) {
+            x[i] = x[i - 1];
+        }
+    }
+    return x;
+}
+')
+
+Rcpp::cppFunction('
+CharacterVector fillCharCharVec(CharacterVector x) {
+    for (int i = 1; i < x.size(); i++) {
+        if (x[i] == NA_STRING) {
+            x[i] = x[i - 1];
+        }
+    }
+    return x;
+}
+')
+
+#' C version of `moving_average`
+Rcpp::cppFunction('
+NumericVector movingAverage(NumericVector x, int t, int overlap = 0) {
+    int slide = t / 2;
+    
+    if (overlap > slide) {
+        Rcpp::warning("Overlap is bigger than window size. Capping overlap to window size.");
+        overlap = slide;
+    }
+    
+    int x0 = 1 + slide;
+    int xn = x.size() - slide;
+    int wsize = slide - overlap + 1;
+    
+    int N = (xn - x0) / wsize + 1;
+    
+    NumericVector result(N);
+    
+    for (int i = 0; i < N; i++) {
+        int start = x0 + i * wsize - slide ;
+        int end = start + 2*slide;
+        
+        double sum = 0.0;
+        int count = 0;
+        for (int j = start; j <= end; j++) {
+            sum += x[j - 1];
+            count += 1;
+        }
+        result[i] = sum / count;
+    }
+    
+    return result;
+}
+')
+
