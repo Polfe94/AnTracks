@@ -23,10 +23,15 @@ setClass('Simulation', representation(
 	type = 'character',
 	refcoords = 'data.frame',
 	r = 'numeric',
+	food = 'data.frame',
 	.__classVersion__ = 'character'
 ), prototype = list(
 	r = 1.01,
-	refcoords = hex_sim, 
+	refcoords = hex_sim,
+	food = data.frame(node = c("(6, 33)", "(6, 34)", "(7, 34)", # patch 1
+	                           "(7, 33)", "(7, 32)", "(6, 32)",
+	                           "(6, 11)", "(6, 12)", "(7, 12)", # patch 2
+	                           "(7, 11)", "(7, 10)", "(6, 10)")),
 	.__classVersion__ = '1.0'
 ))
 
