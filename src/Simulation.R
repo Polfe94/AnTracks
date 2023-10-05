@@ -75,7 +75,7 @@ setMethod('compute_connectivity', signature = 'Simulation', function(obj, t, ...
 		setDT(obj@data)
 	}
 	result <- obj@data[, .(N= mean(N), k = as.numeric(lapply(list(pos), function(i){
-		x <- str_extract(unlist(strsplit(i, '; ')), '\\(\\d{1,2}, \\d{1,2}\\)')
+		x <- parse_nodes(i)
 		mean(connectivity(x, t, ...))
 	}))),
 	     by = .(Frame = ((Frame - 1) %/% t)*t)]
