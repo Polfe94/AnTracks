@@ -592,3 +592,7 @@ NumericVector movingAverage(NumericVector x, int t, int overlap = 0) {
 }
 ')
 
+parse_nodes <- function(nodes, pattern = '\\(\\d{1,2}, \\d{1,2}\\)'){
+    unique(str_extract(unlist(strsplit(nodes, '; ')), pattern))
+}
+
