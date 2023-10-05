@@ -1,18 +1,19 @@
 ## --- LOAD GENERIC FUNCTIONS --- ##
-Path2File <- normalizePath(paste0(gsub('Experiment.R', '', paste0(sys.frames()[[1]]$ofile)), '/functions.R'))
+Path2File <- normalizePath(paste0(gsub('Simulation.R', '', paste0(sys.frames()[[1]]$ofile)), '/functions.R'))
 source(Path2File)
 
-Path2File <- normalizePath(paste0(gsub('Experiment.R', '', paste0(sys.frames()[[1]]$ofile)), '/visualization.R'))
+Path2File <- normalizePath(paste0(gsub('Simulation.R', '', paste0(sys.frames()[[1]]$ofile)), '/visualization.R'))
 source(Path2File)
 
 ## --- LOAD HEXAGONAL REFERENCE COORDINATES & SPREADSHEET REFERENCE --- ##
-Path2File <- normalizePath(paste0(gsub('Experiment.R', '', paste0(sys.frames()[[1]]$ofile)), '/../data/hex_sims.csv'))
+Path2File <- normalizePath(paste0(gsub('Simulation.R', '', paste0(sys.frames()[[1]]$ofile)), '../data/hex_sims.csv'))
 if(!file.exists(Path2File)){
-	warning("File hex.csv does not exist. Trying to download from repository.")
+	warning("File hex_sims.csv does not exist. Trying to download from repository.")
 	download.file("https://github.com/Polfe94/AnTracks/tree/main/data/hex_sims.csv",
 		      Path2File)
 } 
-hex_sim <- read.csv(Path2File)
+hex_sim <- read.csv(Path2File, sep = ',', dec = '.', stringsAsFactors = F)
+rm(Path2File)
 
 #### +++ CLASS DEFINITION +++ ####
 setClass('Simulation', representation(
