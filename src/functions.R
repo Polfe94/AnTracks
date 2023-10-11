@@ -368,19 +368,7 @@ M2sbst <- function(M, t){
      sbst
 }
 
-get_neighbors <- function(nodes, ...){
-        l <- list(...)
-        if('edges' %in% names(l)){
-                edges <- l$edges
-        } else {
-                if(!exists('edges', envir = .GlobalEnv)){
-                        if('refcoords' %in% names(l)){
-                                edges <<- compute_edges(refcoords)
-                        } else {
-                                edges <<- compute_edges()
-                        }
-                }
-        }
+get_neighbors <- function(nodes, edges = edges){
 
         neighbors <- unique(unlist(edges[edges$o %in% nodes | edges$d %in% nodes, c('o', 'd')]))
         neighbors[!neighbors %in% nodes]
@@ -479,7 +467,7 @@ moving_average <- function(x, t, overlap = 0){
 }
 
 # compute connectivity of the network
-connectivity <- function(nodes, ...){
+connectivity <- function(nodes, edges){
         
         nodes <- unique(nodes[!is.na(nodes)])
         l <- length(nodes)
@@ -489,7 +477,7 @@ connectivity <- function(nodes, ...){
         clusters <- c()
         
         while(sum(clusters) < l){
-                nodes2check <- get_neighbors(nodes[1], ...)
+                nodes2check <- get_neighbors(nodes[1], edges)
                 current_branch <- nodes[1]
                 nodes <- nodes[-1]
                 check <- nodes2check %in% nodes
@@ -497,7 +485,7 @@ connectivity <- function(nodes, ...){
                         nodes_in_branch <- unique(nodes2check[check])
                         current_branch <- c(current_branch, nodes_in_branch)
                         nodes <- nodes[!nodes %in% nodes_in_branch]
-                        nodes2check <- get_neighbors(nodes_in_branch, ...)
+                        nodes2check <- get_neighbors(nodes_in_branch, edges)
                         check <- nodes2check %in% nodes
                 }
                 clusters <- c(clusters, length(current_branch))
@@ -593,6 +581,36 @@ NumericVector movingAverage(NumericVector x, int t, int overlap = 0) {
 ')
 
 parse_nodes <- function(nodes, pattern = '\\(\\d{1,2}, \\d{1,2}\\)'){
-    unique(str_extract(unlist(strsplit(nodes, '; ')), pattern))
+    # x <- unique(unlist(strsplit(nodes, '; ')))
+    # y <- str_extract(x, pattern)
+    # ids <- str_extract(x, '\\d{1,2}')
+    # idx <- !duplicated(ids, fromLast = TRUE)
+    # y[idx]
+    str_extract(unique(unlist(strsplit(nodes, '; '))), pattern)
+    # data.table(node_label = x)[hex_sim, node := i.node, on = 'node_label'][['node']]
+    # merge(data.table(node_label = x), hex_sim, by = 'node_label')[['node']]
+}
+
+compute_neighbors <- function(refcoords = hex[hex$y > 1000, ], r = 51){
+    xy <- as.matrix(refcoords[, c('x', 'y')])
+    
+    d <- pdist(xy, xy)
+    idx <- which(d < r & d > 0, arr.ind = TRUE)
+    
+    dt <- data.table(o = refcoords$node[idx[, 1]], d = refcoords$node[idx[, 2]])
+    dt[, .(d = list(d)), by = o]
+    
+}
+
+compute_connectivity <- function(.Object, t, edges){
+    k <- .Object@data[, .(k = lapply(list(node), function(i){
+        mean(connectivity(unlist(i), edges))
+    })), by = .(Frame = ((Frame -1) %/% t) *t)]
+    if(class(.Object) == 'Experiment'){
+        .Object@connectivity <- k
+    } else if(class(.Object) == 'Simulation'){
+        .Object@results[['k']] <- k
+    }
+    .Object
 }
 

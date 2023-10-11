@@ -13,6 +13,8 @@ if(!file.exists(Path2File)){
                       Path2File)
 } 
 hex <- read.csv(Path2File)
+edges <- compute_edges()
+
 
 Path2File <- normalizePath(paste0(gsub('Experiment.R', '', paste0(sys.frames()[[1]]$ofile)), '/../data/Experiments_Spreadsheet_ANTS2018.csv'))
 if(!file.exists(Path2File)){
@@ -28,155 +30,156 @@ setClass('Experiment', representation(
         type = 'character',
         matrix = 'data.frame',
         interactions = 'data.frame',
-        refcoords = 'data.frame',
-        r = 'numeric',
         date = 'character', 
         food = 'list', 
         N = 'numeric',
         I = 'numeric',
-        connectivity = 'numeric',
+        connectivity = 'list',
         trails = 'integer',
         nest = 'integer', 
         AiT = 'data.frame',
         IiT = 'data.frame',
         .__classVersion__ = 'character'
 ), prototype = list(
-        r = 51,
-        refcoords = hex[hex$y > 1000, ],
         nest = nest_influence(r = 101), 
         .__classVersion__ = '1.0'
 ))
 
-setGeneric('updateObject', function(obj){
+setGeneric('updateObject', function(.Object){
         standardGeneric('updateObject')
 })
 
-setMethod('updateObject', 'Experiment', function(obj){
-        if(.hasSlot(obj, '.__classVersion__') && obj@.__classVersion__ == '1.0'){
-                return(obj)
+setMethod('updateObject', 'Experiment', function(.Object){
+        if(.hasSlot(.Object, '.__classVersion__') && .Object@.__classVersion__ == '1.0'){
+                return(.Object)
         } else {
                 attrs <- getSlots('Experiment')
                 slots <- list(Class = 'Experiment')
                 for(i in names(attrs)){
-                        if(.hasSlot(obj, i)){
-                                x <- slot(obj, i)
+                        if(.hasSlot(.Object, i)){
+                                x <- slot(.Object, i)
                                 if(attrs[i] %in% class(x)){
                                         slots[[i]] <- x
                                 }
                         }
                 }
-                obj <- do.call('new', args = slots)
-                obj
+                .Object <- do.call('new', args = slots)
+                .Object
         }
 })
 
 #### +++ GENERIC FUNCTIONS +++ ####
-setGeneric('compute_nodes', function(obj){
+setGeneric('compute_nodes', function(.Object){
         standardGeneric('compute_nodes')
 })
 
-setGeneric('activity_matrix', function(obj, binary = TRUE){
+setGeneric('activity_matrix', function(.Object, binary = TRUE){
         standardGeneric('activity_matrix')
 })
 
-setGeneric('interaction_matrix', function(obj){
+setGeneric('interaction_matrix', function(.Object){
         standardGeneric('interaction_matrix')
 })
 
-setGeneric('get_matrix', function(obj, ...){
+setGeneric('get_matrix', function(.Object, ...){
         standardGeneric('get_matrix')
 })
 
-setGeneric('get_N', function(obj){
+setGeneric('get_N', function(.Object){
         standardGeneric('get_N')
 })
 
-setGeneric('get_I', function(obj){
+setGeneric('get_I', function(.Object){
         standardGeneric('get_I')
 })
 
-setGeneric('mutual_info', function(obj, t, nodes = NULL){
+# setGeneric('compute_connectivity', signature = c('Experiment'),
+#            def = function(.Object, t, edges){
+#         standardGeneric('compute_connectivity')
+# })
+
+setGeneric('mutual_info', function(.Object, t, edges, nodes = NULL){
         standardGeneric('mutual_info')
 })
 
-setGeneric('get_fp', function(obj){
+setGeneric('get_fp', function(.Object){
         standardGeneric('get_fp')
 })
 
-setGeneric('food_detection', function(obj){
+setGeneric('food_detection', function(.Object){
         standardGeneric('food_detection')
 })
 
-setGeneric('food_trails', function(obj){
+setGeneric('food_trails', function(.Object){
         standardGeneric('food_trails')
 })
 
-setGeneric('optimal_food_trails', function(obj){
+setGeneric('optimal_food_trails', function(.Object){
         standardGeneric('optimal_food_trails')
 })
 
-setGeneric('ait', function(obj, include_nest = FALSE){
+setGeneric('ait', function(.Object, include_nest = FALSE){
         standardGeneric('ait')
 })
 
-setGeneric('iit', function(obj, include_nest = FALSE){
+setGeneric('iit', function(.Object, include_nest = FALSE){
         standardGeneric('iit')
 })
 
-setGeneric('draw_FoodPatches', function(obj, add = NULL, ...){
+setGeneric('draw_FoodPatches', function(.Object, add = NULL, ...){
         standardGeneric('draw_FoodPatches')
 })
 
-setGeneric('plot_trails', function(obj){
+setGeneric('plot_trails', function(.Object){
         standardGeneric('plot_trails')
 })
 
-setGeneric('plot_AiT', function(obj, ...){
+setGeneric('plot_AiT', function(.Object, ...){
         standardGeneric('plot_AiT')
 })
 
-setGeneric('plot_IiT', function(obj, norm = FALSE, ...){
+setGeneric('plot_IiT', function(.Object, norm = FALSE, ...){
         standardGeneric('plot_IiT')
 })
 
 #### +++ CLASS METHODS +++ ####
-setMethod('get_N', 'Experiment', function(obj){
-        dt <- data.table(obj@data)
+setMethod('get_N', 'Experiment', function(.Object){
+        dt <- data.table(.Object@data)
         l <- max(dt$Frame)
         t <- seq_len(l)
         N <- numeric(l)
         tmp <- dt[, .N, by = Frame]
         N[tmp$Frame] <- tmp$N
-        obj@N <- N
-        obj
+        .Object@N <- N
+        .Object
 })
 
-setMethod('get_I', 'Experiment', function(obj){
-        dt <- data.table(obj@data)
+setMethod('get_I', 'Experiment', function(.Object){
+        dt <- data.table(.Object@data)
         l <- max(dt$Frame)
         t <- seq_len(l)
         I <- numeric(l)
         tmp <- dt[Crossings > 0, .N, by = Frame]
         I[tmp$Frame] <- tmp$N
-        obj@I <- I
-        obj
+        .Object@I <- I
+        .Object
 })
 
-setMethod('compute_nodes', signature = 'Experiment', function(obj){
-        if(!'node' %in% colnames(obj@data)){
+setMethod('compute_nodes', signature = 'Experiment', function(.Object){
+        if(!'node' %in% colnames(.Object@data)){
                 
-                obj@data$node <- get_node(obj@data[, c('Xmm', 'Ymm')], xy = obj@refcoords)
+                .Object@data$node <- get_node(.Object@data[, c('Xmm', 'Ymm')], xy = .Object@refcoords)
                 
                 # clean memmory
                 do.call('gc', list(FALSE))
         } 
-        obj
+        .Object
 })
 
-setMethod('activity_matrix', 'Experiment', function(obj, binary = TRUE){
+setMethod('activity_matrix', 'Experiment', function(.Object, binary = TRUE){
 
-        obj <- compute_nodes(obj)
-        dt <- data.table(obj@data[, c('Frame', 'node')])
+        .Object <- compute_nodes(.Object)
+        dt <- data.table(.Object@data[, c('Frame', 'node')])
         if(binary){
                 m <- dt[, as.integer(.N > 0), by = c('node', 'Frame')] 
                 colnames(m)[3] <- 'N'
@@ -184,22 +187,22 @@ setMethod('activity_matrix', 'Experiment', function(obj, binary = TRUE){
                 m <- dt[, .N, by = c('node', 'Frame')]
                 
         }
-        obj@matrix <- m[, c('Frame', 'node', 'N')]
-        obj
+        .Object@matrix <- m[, c('Frame', 'node', 'N')]
+        .Object
 })
 
-setMethod('interaction_matrix', 'Experiment', function(obj){
-        if(nrow(obj@interactions) == 0){
-                obj <- compute_nodes(obj)
-                dt <- data.table(obj@data[, c('Frame', 'node', 'Crossings')])
+setMethod('interaction_matrix', 'Experiment', function(.Object){
+        if(nrow(.Object@interactions) == 0){
+                .Object <- compute_nodes(.Object)
+                dt <- data.table(.Object@data[, c('Frame', 'node', 'Crossings')])
                 m <- unique(dt[Crossings > 0, ])
                 m$N <- 1
-                obj@interactions <- m[, c('Frame', 'node', 'N')]
+                .Object@interactions <- m[, c('Frame', 'node', 'N')]
         }
-        obj
+        .Object
 })
 
-setMethod('get_matrix', 'Experiment', function(obj, ...){
+setMethod('get_matrix', 'Experiment', function(.Object, ...){
         l <- list(...)
         n <- names(l)
         if(!'data' %in% n){
@@ -208,32 +211,32 @@ setMethod('get_matrix', 'Experiment', function(obj, ...){
                 data <- l$data
         }
         if(!'t' %in% n){
-                t <- seq_len(max(obj@data$Frame))
+                t <- seq_len(max(.Object@data$Frame))
         } else {
                 t <- l$t
         }
         if(!'maxt' %in% n){
-                maxt <- max(obj@data$Frame)
+                maxt <- max(.Object@data$Frame)
         } else {
                 maxt <- l$maxt
         }
         if('type' %in% n && grepl('inter', l$type)){
                 
-                obj <- interaction_matrix(obj)
-                M <- obj@interactions
+                .Object <- interaction_matrix(.Object)
+                M <- .Object@interactions
         } else {
-                obj <- activity_matrix(obj)
-                M <- obj@matrix
+                .Object <- activity_matrix(.Object)
+                M <- .Object@matrix
         }
         
         m <- M2M(M, data = data, maxt = maxt)
         M2sbst(m, t)
 })
 
-# setMethod('activity_matrix', 'Experiment', function(obj, data = -1){
-#      obj <- compute_nodes(obj)
-#      n <- obj@data$node
-#      t <- obj@data$Frame
+# setMethod('activity_matrix', 'Experiment', function(.Object, data = -1){
+#      .Object <- compute_nodes(.Object)
+#      n <- .Object@data$node
+#      t <- .Object@data$Frame
 #      m <- matrix(data = data, ncol = length(unique(n)), nrow = max(t))
 #      dimnames(m) <- list(seq_len(nrow(m)), unique(n))
 #      
@@ -241,44 +244,44 @@ setMethod('get_matrix', 'Experiment', function(obj, ...){
 #           idx <- which(colnames(m) == n[i])
 #           m[t[i], idx] <- 1
 #      }
-#      obj@matrix <- m
-#      obj
+#      .Object@matrix <- m
+#      .Object
 # })
 
-setMethod('get_fp', 'Experiment', function(obj){
-        if(!length(obj@food)){
-                d <- obj@date
+setMethod('get_fp', 'Experiment', function(.Object){
+        if(!length(.Object@food)){
+                d <- .Object@date
                 if(length(d)){
                         food <- get_foodPatches(d)
-                        obj@food <- food
+                        .Object@food <- food
                 } else {
                         stop('Invalid experiment date')    
                 }
         } 
-        obj
+        .Object
 })
 
-setMethod('food_detection', 'Experiment', function(obj){
-        if(!length(obj@food) | length(obj@food) == 0){
-                obj <- get_fp(obj)
+setMethod('food_detection', 'Experiment', function(.Object){
+        if(!length(.Object@food) | length(.Object@food) == 0){
+                .Object <- get_fp(.Object)
         }
-        if('t' %in% colnames(obj@food[[1]])){
-                return(obj)
+        if('t' %in% colnames(.Object@food[[1]])){
+                return(.Object)
         }
         
-        food <- data.table(do.call('rbind', obj@food[1:2]))[, node := mapply(get_node, x, y)]
+        food <- data.table(do.call('rbind', .Object@food[1:2]))[, node := mapply(get_node, x, y)]
         food$GP <- c(rep(1, 6), rep(2, 6))
-        xy <- data.table(obj@data)[node %in% food$node, lapply(.SD, min), .SDcols = c('Frame'), by = node]
+        xy <- data.table(.Object@data)[node %in% food$node, lapply(.SD, min), .SDcols = c('Frame'), by = node]
         mrgd <- merge(food, xy)
         df <- data.frame(x = mrgd$x, y = mrgd$y, t = mrgd$Frame, GP = mrgd$GP)
         food <- list(GP1 = df[df$GP == 1, c('x', 'y', 't')], GP2 = df[df$GP == 2, c('x', 'y', 't')])
-        obj@food <- food
-        obj
+        .Object@food <- food
+        .Object
 })
 
-setMethod('mutual_info', 'Experiment', function(obj, t, nodes = NULL){
-        obj <- activity_matrix(obj)
-        m <- M2M(obj@matrix, data = -1)
+setMethod('mutual_info', 'Experiment', function(.Object, t, edges = edges, nodes = NULL){
+        .Object <- activity_matrix(.Object)
+        m <- M2M(.Object@matrix, data = -1)
         m <- M2sbst(m, t)
         if(!exists('edges', envir = .GlobalEnv)){
                 edges <<- compute_edges()
@@ -298,27 +301,40 @@ setMethod('mutual_info', 'Experiment', function(obj, t, nodes = NULL){
         z
 })
 
+
+
+setMethod('compute_connectivity', signature = c('Experiment', 'Simulation'),
+          function(.Object, t, edges){
+                  
+                  .Object@results[['k']] <- .Object@data[, .(k = lapply(list(node), function(i){
+                          mean(connectivity(unlist(i), edges))
+                  })), by = .(Frame = ((Frame -1) %/% t) *t)]
+                  
+                  .Object
+                  
+          })
+
 #' Find food trails (according to: time from first food finding until experiment end + 90 percentile activity)
 #' 
 #' NOTE!!! There are OTHER criteria that can be apply to calculate food trails;
 #' These are not covered in this function for purposes of consistence and simplicity
 #' 
-#' @param obj an object of class Experiment
+#' @param .Object an object of class Experiment
 #' @return the object with the food trails in the "trails" slot
-setMethod('food_trails', 'Experiment', function(obj){
-        obj <- activity_matrix(obj, binary = FALSE)
-        obj <- food_detection(obj)
+setMethod('food_trails', 'Experiment', function(.Object){
+        .Object <- activity_matrix(.Object, binary = FALSE)
+        .Object <- food_detection(.Object)
         
-        m <- obj@matrix
-        t <- c(min(do.call('rbind', obj@food)$t), max(obj@data$Frame))
+        m <- .Object@matrix
+        t <- c(min(do.call('rbind', .Object@food)$t), max(.Object@data$Frame))
         m <- m[Frame %in% t[1]:t[2], lapply(.SD, sum), .SDcols = 'N', by = node]
         
-        obj@trails <- m[N > quantile(N, prob = 0.9)]$node
-        obj
+        .Object@trails <- m[N > quantile(N, prob = 0.9)]$node
+        .Object
 })
 
-setMethod('optimal_food_trails', 'Experiment', function(obj){
-        targets <- c(get_node(obj@food[[1]][, 1:2]), get_node(obj@food[[2]][, 1:2]))
+setMethod('optimal_food_trails', 'Experiment', function(.Object){
+        targets <- c(get_node(.Object@food[[1]][, 1:2]), get_node(.Object@food[[2]][, 1:2]))
         origins <- nest_influence(r = 101)
         # origins <- origins[origins %in% hex$node[hex$y > 1030]]
         
@@ -329,79 +345,79 @@ setMethod('optimal_food_trails', 'Experiment', function(obj){
                 }
         }
         nest <- nest_influence(r = 199)
-        obj@trails <- unique(c(nodes, nest[nest %in% hex$node[hex$y > 1030]]))
-        obj
+        .Object@trails <- unique(c(nodes, nest[nest %in% hex$node[hex$y > 1030]]))
+        .Object
 })
 
-setMethod('ait', 'Experiment', function(obj, include_nest = FALSE){
-        if(length(obj@trails) == 0){
-                obj@trails <- food_trails(obj)
+setMethod('ait', 'Experiment', function(.Object, include_nest = FALSE){
+        if(length(.Object@trails) == 0){
+                .Object@trails <- food_trails(.Object)
         }
 
-        m <- as.data.frame(get_matrix(obj, data = 0))
+        m <- as.data.frame(get_matrix(.Object, data = 0))
         if(include_nest){
                 
-                trails <- obj@trails[!obj@trails %in% obj@nest]
+                trails <- .Object@trails[!.Object@trails %in% .Object@nest]
                 df <- data.frame(t = as.integer(rownames(m)),
                                  N = rowSums(m),
                                  inTrail = rowSums(m[, colnames(m) %in% as.character(trails)]),
-                                 nest = rowSums(m[, as.character(obj@nest)]),
-                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(obj@trails)]))
+                                 nest = rowSums(m[, as.character(.Object@nest)]),
+                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(.Object@trails)]))
         } else {
                 df <- data.frame(t = as.integer(rownames(m)),
                                  N = rowSums(m),
-                                 inTrail = rowSums(m[, as.character(obj@trails)]),
-                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(obj@trails)]))
+                                 inTrail = rowSums(m[, as.character(.Object@trails)]),
+                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(.Object@trails)]))
         }
         
         mlt_df <- melt(df, id.vars = 't')
-        obj@AiT <- mlt_df
+        .Object@AiT <- mlt_df
 
-        obj
+        .Object
 })
 
-setMethod('iit', 'Experiment', function(obj, include_nest = FALSE){
-        if(length(obj@trails) == 0){
-                obj@trails <- food_trails(obj)
+setMethod('iit', 'Experiment', function(.Object, include_nest = FALSE){
+        if(length(.Object@trails) == 0){
+                .Object@trails <- food_trails(.Object)
         }
 
-        m <- as.data.frame(get_matrix(obj, data = 0, t = 1:max(obj@data$Frame), type = 'interaction'))
+        m <- as.data.frame(get_matrix(.Object, data = 0, t = 1:max(.Object@data$Frame), type = 'interaction'))
         if(include_nest){
-                trails <- as.character(obj@trails[!obj@trails %in% obj@nest])
+                trails <- as.character(.Object@trails[!.Object@trails %in% .Object@nest])
                 df <- data.frame(t = as.integer(rownames(m)),
                                  N = rowSums(m),
                                  inTrail = rowSums(m[, colnames(m) %in% as.character(trails)]),
-                                 nest = rowSums(m[, colnames(m) %in% as.character(obj@nest)]),
-                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(obj@trails)]))
+                                 nest = rowSums(m[, colnames(m) %in% as.character(.Object@nest)]),
+                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(.Object@trails)]))
         } else {
                 df <- data.frame(t = as.integer(rownames(m)),
                                  N = rowSums(m),
-                                 inTrail = rowSums(m[, colnames(m) %in% as.character(obj@trails)]),
-                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(obj@trails)]))
+                                 inTrail = rowSums(m[, colnames(m) %in% as.character(.Object@trails)]),
+                                 outTrail = rowSums(m[, !colnames(m) %in% as.character(.Object@trails)]))
         }
 
         mlt_df <- melt(df, id.vars = 't')
-        obj@IiT <- mlt_df
+        .Object@IiT <- mlt_df
 
-        obj
+        .Object
 })
 
 #### +++ VISUALIZATION METHODS +++ ####
 #' Draws the food patches
 #' 
-#' @param obj An object of "Experiment" class
+#' @param .Object An object of "Experiment" class
 #' @param add Either NULL or a ggplot object
 #' @param ... Additional parameters to be passed to ggplot (color, size, alpha ...)
 #' @return A ggplot object drawing the food patches on top of whatever (if any)
 #' layer is passed to the argument add.
-setMethod('draw_FoodPatches', 'Experiment', function(obj, add = NULL, ...){
+setMethod('draw_FoodPatches', 'Experiment', function(.Object, add = NULL, ...){
         if(is.null(add)){
                 add <- ggplot()
         }
-        obj <- get_fp(obj)
+        .Object <- get_fp(.Object)
         
-        for(i in seq_along(obj@food[1:2])){
-                f <- obj@food[[i]][chull(obj@food[[i]][, c('x', 'y')]), ]
+        for(i in seq_along(.Object@food[1:2])){
+                f <- .Object@food[[i]][chull(.Object@food[[i]][, c('x', 'y')]), ]
                 add <- add + geom_polygon(data = f, aes(x, y), ...) +
                         xlab('') + ylab('')
                 
@@ -409,17 +425,17 @@ setMethod('draw_FoodPatches', 'Experiment', function(obj, add = NULL, ...){
         add
 })
 
-setMethod('plot_trails', 'Experiment', function(obj){
-        draw_hexagons(add = draw_FoodPatches(obj, fill = 'grey50') +
-                              geom_point(data = data.frame(x = hex$x[obj@trails],
-                                                           y = hex$y[obj@trails]),
+setMethod('plot_trails', 'Experiment', function(.Object){
+        draw_hexagons(add = draw_FoodPatches(.Object, fill = 'grey50') +
+                              geom_point(data = data.frame(x = hex$x[.Object@trails],
+                                                           y = hex$y[.Object@trails]),
                                          aes(x, y), fill = muted('blue'), size = 4, shape = 21))
 })
 
-setMethod('plot_AiT', 'Experiment', function(obj, ...){
+setMethod('plot_AiT', 'Experiment', function(.Object, ...){
         
-        df <- obj@AiT
-        food <- obj@food
+        df <- .Object@AiT
+        food <- .Object@food
         
         ylim <- c(0, 0, rep(max(df$value), 2))
         t <- do.call('rbind', food)$t / 120
@@ -444,9 +460,9 @@ setMethod('plot_AiT', 'Experiment', function(obj, ...){
                 guides(color = guide_legend(override.aes = list(size = 2)))
 })
 
-setMethod('plot_IiT', 'Experiment', function(obj, norm = FALSE, ...){
+setMethod('plot_IiT', 'Experiment', function(.Object, norm = FALSE, ...){
         
-        df <- obj@IiT
+        df <- .Object@IiT
         if(norm){
                 for(i in unique(df$variable)){
                         y <- cumsum(df$value[df$variable == i])
@@ -460,7 +476,7 @@ setMethod('plot_IiT', 'Experiment', function(obj, norm = FALSE, ...){
                 # ybrks <- max(df$value) %/% 8
         }
         
-        food <- obj@food
+        food <- .Object@food
 
         ylim <- c(0, 0, rep(max(df$value), 2))
         t <- do.call('rbind', food)$t / 120
