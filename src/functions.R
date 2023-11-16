@@ -614,3 +614,6 @@ compute_connectivity <- function(.Object, t, edges){
     .Object
 }
 
+argument_parser <- function(args){
+    return(c(plots = FALSE))
+}
