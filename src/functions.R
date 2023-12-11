@@ -15,7 +15,8 @@ library(scales)
 theme_set(ggplot2::theme_classic() + ggplot2::theme(axis.title = element_text(size  = 15, color = 'black'),
                                                     axis.text = element_text(size = 15, color = 'black'),
                                                     legend.text = element_text(size =15, color = 'black'),
-                                                    legend.title = element_text(size = 15, color = 'black')))
+                                                    legend.title = element_text(size = 15, color = 'black'),
+                                                    strip.text = element_text(size = 15, margin = margin(t = 5, b = 5))))
 
 #### +++ GENERIC FUNCTIONS +++ ####
 compute_edges <- function(refcoords = hex[hex$y > 1000, ], r = 51){
