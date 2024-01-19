@@ -142,6 +142,10 @@ setGeneric('plot_IiT', function(.Object, norm = FALSE, ...){
         standardGeneric('plot_IiT')
 })
 
+setGeneric('get_eff', function(.Object){
+        standardGeneric('get_eff')
+})
+
 #### +++ CLASS METHODS +++ ####
 setMethod('get_N', 'Experiment', function(.Object){
         dt <- data.table(.Object@data)
@@ -164,6 +168,7 @@ setMethod('get_I', 'Experiment', function(.Object){
         .Object@I <- I
         .Object
 })
+
 
 setMethod('compute_nodes', signature = 'Experiment', function(.Object){
         if(!'node' %in% colnames(.Object@data)){
@@ -400,6 +405,29 @@ setMethod('iit', 'Experiment', function(.Object, include_nest = FALSE){
         .Object@IiT <- mlt_df
 
         .Object
+})
+
+
+setMethod('get_eff', 'Experiment', function(.Object){
+        food <- range(rbindlist(.Object@food)[['t']])
+        dt <- setDT(.Object@data)
+        filterdt <- dt[Frame <= food[2], .(id = N_ind), by = 'Frame']
+        M <- dcast(data = filterdt, Frame ~ id, value.var = 'id')
+        .tmp <- rbindlist(lapply(2:ncol(M), function(i){
+                idx <- which(!is.na(M[[i]]))
+                data.frame(id = unique(M[[i]][idx]),Frame = M[[1]][idx], d=c(1, diff(idx)))
+        }))
+        .tmp[d > 1, 'd'] <- 0
+        .tmp[, interval := cumsum(c(TRUE, diff(d) != 0)), by = id]
+        .tmp[, interval := ifelse(interval %% 2 == 0, interval + 1, interval), by = id]
+        .tmp_result <- .tmp[, .(start_frame = min(Frame), end_frame = max(Frame)), by = .(id, interval)]
+        
+        .tp1 <- .tmp_result[start_frame <= food[1]][, end_frame := ifelse(end_frame < food[1], end_frame, food[1])]
+        tp1_value <- sum(.tp1[, end_frame] - .tp1[, start_frame])/2
+        .tp2 <- .tmp_result[start_frame <= food[2] & end_frame >= food[1]][, start_frame := ifelse(start_frame < food[1], food[1], start_frame)]
+        .tp2 <- .tp2[, end_frame := ifelse(end_frame < food[2], end_frame, food[2])]
+        tp2_value <- sum(.tp2[, end_frame] - .tp2[, start_frame])/2
+        data.table(tp1 = tp1_value, tp2 = tp2_value)
 })
 
 #### +++ VISUALIZATION METHODS +++ ####

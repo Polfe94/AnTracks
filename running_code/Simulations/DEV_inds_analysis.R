@@ -1,16 +1,25 @@
 source('~/research/gits/AnTracks/src/Experiment.R')
 library(arrow)
-dt <- data.table(read_parquet('/home/polfer/research/gits/AutomatAnts/results/some_data.parquet'))[, -1]
+path <- '/home/polfer/research/gits/AutomatAnts/results/rec_noRec_nf/rec/uniform/'
+dt <- data.table(read_parquet(paste0(path, 'uniform_82_data.parquet')))
+pos <- data.table(read_parquet(paste0(path, 'uniform_82_positions.parquet')))
+food <- data.table(read_parquet(paste0(path, 'uniform_82_food.parquet')))
 keys <- data.table(read.csv('/home/polfer/research/gits/AutomatAnts/results/some_keys.csv'))[, -1]
 
+# parse_ids <- function(x){
+# 	as.numeric(regmatches(x, gregexpr('\\d{1,2}', x))[[1]])
+# }
+
 parse_ids <- function(x){
-	as.numeric(regmatches(x, gregexpr('\\d{1,2}', x))[[1]])
+	as.numeric(strsplit(x, ',')[[1]])
 }
 
 get_missing_ids <- function(x){
 	x <- unique(unlist(x))
 	if(length(x)) (0:99)[-(x+1)] else 0:99
 }
+
+
 
 ids <- dt[, .(id = parse_ids(id_out)), by = 'Frame']
 ids2 <- dt[, .(id = list(parse_ids(id_out))), by = 'Frame']

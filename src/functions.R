@@ -592,6 +592,10 @@ parse_nodes <- function(nodes, pattern = '\\(\\d{1,2}, \\d{1,2}\\)'){
     # merge(data.table(node_label = x), hex_sim, by = 'node_label')[['node']]
 }
 
+parse_ids <- function(nodes, pattern = '\\d{1,2}'){
+    as.integer(str_extract(unique(unlist(strsplit(nodes, '; '))), pattern))
+}
+
 compute_neighbors <- function(refcoords = hex[hex$y > 1000, ], r = 51){
     xy <- as.matrix(refcoords[, c('x', 'y')])
     
