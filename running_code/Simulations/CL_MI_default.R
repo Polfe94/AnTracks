@@ -5,7 +5,9 @@ library(parallel)
 
 path <- '/home/usuaris/pol.fernandez/research/AutomatAnts/results/2024/updated_params/default/'
 f <- list.files(path)
-files <- unlist(regmatches(f, gregexpr('default_\\d{1,2}', f)))
+files <- f[grepl('data', f)]
+
+nCores <- 20L # <--- Change suitably !
 
 parse_nodes <- function(nodes){
 	unlist(strsplit(nodes, ';'))
@@ -38,15 +40,15 @@ MI <- function(x, tw = 2400, shift = 300){
 			result[[i]] <- 0
 		}
 		do.call('gc', args = list(verbose = FALSE))
+		print(paste0('Iter ', i, ' complete; MI = ', round(result[[i]], 4), ' at time = ', sq[i]))
 	}
 	result
 }
 
-nCores <- detectCores()
 
 mutual_info_result <- mclapply(X = seq_along(files),
 	 FUN = function(i){
-	 	x <- data.table(read_parquet(paste0(path, files[i], '_data.parquet')))
+	 	x <- data.table(read_parquet(paste0(path, files[i])))
 	 	MI(x, tw = 2400, shift = 300)
 	 },
 	 mc.cores = nCores)
