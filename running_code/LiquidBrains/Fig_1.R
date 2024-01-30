@@ -138,11 +138,11 @@ pos_det <- merge(hex, rbindlist(lapply(det, function(i){
 	i@data[, .N, by = 'node']
 }), idcol = TRUE)[, .(N = sum(N)), by = 'node'], by = 'node')
 
-c2 <- draw_nodes(c1, 
+c2 <- draw_nodes(pos_det, 
 	   add = draw_hexagons(edges, linewidth = 2, color = 'black',
 	   		    add = draw_hexagons(edges, linewidth = 2, color = 'black', 
 	   		    		    add = geom_foodpatches(fill = 'mediumpurple', alpha = 0.9))), 
-	   z = rank(c1[['N']]), size = 4) + 
+	   z = rank(pos_det[['N']]), size = 4) + 
 	scale_fill_viridis('Occupancy',option = 'plasma', breaks = c(1, 620),
 			   labels = c('Low', 'High')) +
 	theme(legend.position = 'bottom', aspect.ratio = 0.5,
@@ -201,7 +201,7 @@ a <- ggplot(data = data_peak, aes(Frame, N)) +
 	scale_color_manual('',values = c('grey30', 'grey80'))+
 	geom_vline(xintercept = unlist(foods)*2, linetype = 2, linewidth = 1)+
 	geom_vline(xintercept = unlist(foods_det)*2, linetype = 3, linewidth = 1)+
-	theme(legend.position = c(0.8, 0.75),
+	theme(legend.position = c(0.8, 0.85),
 	      legend.background = element_rect(fill = 'white', color = 'black'),
 	      legend.title = element_blank())
 
@@ -271,7 +271,9 @@ b <- ggplot(data = rbind(melt(rbind(global_sim_effs[, -'.id'], det_global_eff), 
 			 			             rbindlist(det_tps))), use.names = TRUE), 
 			 		id.vars = 'condition'))[, value := 1/value]), 
 			 aes(condition, value, fill = condition))+
-	geom_boxplot(alpha = 0.6, show.legend = FALSE) +
+
+	geom_boxplot(alpha = 0.6, outlier.shape = NA, show.legend = FALSE) +
+	geom_jitter(alpha = 0.25, width = 0.15, size = 3, show.legend = FALSE)+
 	facet_wrap(~ factor(variable, labels = c('Exploration time', 'Exploitation time', 
 						 'Exploration efficiency', 'Exploitation efficiency')),
 		   scales = 'free_y')+
@@ -304,5 +306,108 @@ dev.off()
 ############ FALTA MUTUAL INFORMATION !!!!! ############
 ########################################################
 
+load("/home/polfer/research/gits/AnTracks/results/MI_det.RData")
+load("/home/polfer/research/gits/AnTracks/results/MI_default.RData")
+mi_sim <- rbindlist(lapply(seq_along(mutual_info_result), function(i){
+	x <- mutual_info_result[[i]]
+	n <- names(x)
+	rbindlist(lapply(seq_along(x), function(ii){
+		data.frame(t = as.numeric(n)[ii], x = as.numeric(x[[ii]]))
+	}))
+}), idcol = TRUE)
+
+mi_exp <- rbindlist(lapply(seq_along(det_mi), function(i){
+	
+	x <- det_mi[[i]]
+	n <- names(x)
+	rbindlist(lapply(seq_along(x), function(ii){
+		data.frame(t = as.numeric(n)[ii], x = as.numeric(x[[ii]]))
+	}))
+	
+	
+}), idcol = TRUE)
+
+
+# ggplot(data = mi_sim, aes(t, x, group = t)) + geom_boxplot()
+# ggplot(data = mi_sim[, .(x = mean(x)), by = 't'], aes(t, x))+
+# 	geom_point(size = 3, shape = 21) +
+# 	geom_path()+
+# 	scale_x_continuous('Time (min)', breaks = seq(0, 150, 50)*120,
+# 			   labels = seq(0, 150, 50))+
+# 	scale_y_continuous('<MI>')
+# ggplot(data = mi_exp[, .(x = mean(x)), by = 't'], aes(t, x))+
+# 	geom_point(size = 3, shape = 21) +
+# 	geom_path()+
+# 	scale_x_continuous('Time (min)', breaks = seq(0, 150, 50)*120,
+# 			   labels = seq(0, 150, 50))+
+# 	scale_y_continuous('<MI>')
+
+
+d <- ggplot(data = mi_sim[, .(x = mean(x)), by = 't'][!is.na(x), .(x = norm_range(x, 0, 1), t = t)], aes(t, x), alpha = 0.5)+
+	geom_point(size = 3, shape = 21, aes(color = 'Simulations')) +
+	geom_path(aes(color = 'Simulations'))+
+	geom_point(size = 3, shape = 21, 
+		   data = mi_exp[, .(x = mean(x)), by = 't'][!is.na(x), .(x = norm_range(x, 0, 1), t = t)], aes(color = 'Experiments')) +
+	geom_path(data = mi_exp[, .(x = mean(x)), by = 't'][!is.na(x), .(x = norm_range(x, 0, 1), t = t)], aes(color = 'Experiments'))+
+	geom_vline(xintercept = unlist(foods)*2, linetype = 2, linewidth = 1)+
+	geom_vline(xintercept = unlist(foods_det)*2, linetype = 3, linewidth = 1)+
+	scale_x_continuous('Time (min)', breaks = seq(0, 150, 50)*120,
+			   labels = seq(0, 150, 50))+
+	scale_y_continuous(TeX('$<MI_{sim}>$'), labels = seq(0, 1, length.out = 5)*
+			   	round(max(mi_sim[, .(x = mean(x)), by = 't'][['x']], na.rm = TRUE), 4),
+			   sec.axis = sec_axis(trans = function(i) i, 
+			   		    labels = seq(0, 1, length.out = 5)*
+			   		    	round(max(mi_exp[, .(x = mean(x)), by = 't'][['x']], na.rm = TRUE), 4),
+			   		    name = TeX('$<MI_{exp}>$'))) +
+	scale_color_manual('', values = c('mediumpurple', 'gold3'))+
+	theme(legend.position = c(0.825, 0.85), 
+	      legend.background = element_rect(color = 'black', fill = NA),
+	      legend.title = element_blank())
+
+
+
+# png('/home/polfer/research/gits/AnTracks/plots/summary_default_prov.png', 8000, 6000, res = 550)
+# grid.arrange(grobs = list(a + theme(aspect.ratio = 0.5, plot.title = element_text(face = 'bold'))+
+# 			  	ggtitle('A'), b+ggtitle('B')+theme(plot.title = element_text(face = 'bold')), 
+# 			  ggarrange(c2, c, ncol = 1, common.legend = TRUE,
+# 			  	  legend = 'bottom', labels = c('C'), hjust = -8.25, vjust = 0.5 ), 
+# 			  d + ggtitle('D')+theme(plot.title = element_text(face = 'bold'))),
+# 			  layout_matrix = rbind(c(1, 2), c(1, 2), c(3, 2), 
+# 			  		      c(3, 2), c(3, 4), c(3, 4)))
+# dev.off()
+# 
+# 
+# 
+# png('/home/polfer/research/gits/AnTracks/plots/summary_default_prov.png', 8000, 6000, res = 550)
+# grid.arrange(grobs = list(a + theme(aspect.ratio = 0.5, plot.title = element_text(face = 'bold'))+
+# 			  	ggtitle('A'), b+ggtitle('B')+theme(plot.title = element_text(face = 'bold')), 
+# 			  ggarrange(c2, c, ncol = 1, common.legend = TRUE,
+# 			  	  legend = 'bottom', labels = c('C'), hjust = -8.25, vjust = 0.5 ), 
+# 			  d + ggtitle('D')+theme(plot.title = element_text(face = 'bold'))),
+# 			  layout_matrix = rbind(c(1, 2), c(1, 2), c(3, 2), 
+# 			  		      c(3, 2), c(3, 4), c(3, 4)))
+# dev.off()
+
+
+png('/home/polfer/research/gits/AnTracks/plots/summary_default_prov.png', 8000, 6000, res = 550)
+grid.arrange(grobs = list(a + theme(aspect.ratio = 0.5, plot.title = element_text(face = 'bold'))+
+			  	ggtitle('A'), b+ggtitle('B')+theme(plot.title = element_text(face = 'bold')), 
+			  ggarrange(c2, c, ncol = 1, common.legend = TRUE,
+			  	  legend = 'bottom', labels = c('C'), hjust = -8.25, vjust = 0.5 ), 
+			  d + ggtitle('D')+theme(plot.title = element_text(face = 'bold'))),
+			  layout_matrix = rbind(c(1, 2), c(1, 2), c(3, 2), 
+			  		      c(3, 2), c(3, 4), c(3, 4)))
+dev.off()
+
+
+ggsave('/home/polfer/research/gits/AnTracks/plots/summary_default.pdf', 
+       plot = grid.arrange(grobs = list(a + theme(aspect.ratio = 0.5, plot.title = element_text(face = 'bold'))+
+       				 	ggtitle('A'), b+ggtitle('B')+theme(plot.title = element_text(face = 'bold')), 
+       				 ggarrange(c2, c, ncol = 1, common.legend = TRUE,
+       				 	  legend = 'bottom', labels = c('C'), hjust = -8.25, vjust = 0.5 ), 
+       				 d + ggtitle('D')+theme(plot.title = element_text(face = 'bold'))),
+       				 layout_matrix = rbind(c(1, 2), c(1, 2), c(3, 2), 
+       				 		      c(3, 2), c(3, 4), c(3, 4))), device = 'pdf',
+       dpi = 300, width = 4400, height = 3300, unit = 'px')
 
 

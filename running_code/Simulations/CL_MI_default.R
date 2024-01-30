@@ -34,7 +34,7 @@ MI <- function(x, tw = 2400, shift = 300){
 			m <- dcast(M, Frame ~ node, value.var = 'N')
 			M <- NULL
 			m$Frame <- NULL
-			result[[i]] <- mean(mutinformation(m))
+			result[[i]] <- mutinformation(m)
 			
 		} else {
 			result[[i]] <- 0
@@ -46,11 +46,11 @@ MI <- function(x, tw = 2400, shift = 300){
 }
 
 
-mutual_info_result <- mclapply(X = seq_along(files),
+sim_mi <- mclapply(X = seq_along(files),
 	 FUN = function(i){
 	 	x <- data.table(read_parquet(paste0(path, files[i])))
 	 	MI(x, tw = 2400, shift = 300)
 	 },
 	 mc.cores = nCores)
 
-save(mutual_info_result, file = '/home/usuaris/pol.fernandez/research/AnTracks/results/MI_default.RData')
+save(sim_mi, file = '/home/usuaris/pol.fernandez/research/AnTracks/results/MI_default_full.RData')

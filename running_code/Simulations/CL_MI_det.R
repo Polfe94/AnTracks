@@ -22,7 +22,7 @@ MI <- function(x, tw = 2400, shift = 300){
 			m <- dcast(M, Frame ~ node, value.var = 'N')
 			M <- NULL
 			m$Frame <- NULL
-			result[[i]] <- mean(mutinformation(m))
+			result[[i]] <- mutinformation(m)
 			
 		} else {
 			result[[i]] <- 0
@@ -39,4 +39,4 @@ det_mi <- mclapply(X = seq_along(det),
 			       },
 			       mc.cores = nCores)
 
-save(det_mi, file = '/home/usuaris/pol.fernandez/research/AnTracks/results/MI_det.RData')
+save(det_mi, file = '/home/usuaris/pol.fernandez/research/AnTracks/results/MI_det_full.RData')
