@@ -123,6 +123,12 @@ files <- unique(unlist(regmatches(files, gregexpr('default_\\d{1,2}', files))))
 
 #### SPATIAL DYNAMICS
 pos <- data.table(read_parquet(paste0(path, files[3], '_positions.parquet')))
+# POS <- rbindlist(lapply(seq_along(files), function(i){
+# 	data.table(read_parquet(paste0(path, files[i], '_positions.parquet')))
+# }))
+# POS_trimmed <- rbindlist(lapply(seq_along(files), function(i){
+# 	data.table(read_parquet(paste0(path, files[i], '_positions.parquet')))
+# }))
 food <- data.table(read_parquet(paste0(path, files[1], '_food.parquet')))[, node := revert_node(node)]
 food <- as.data.frame(merge(food, hex_sim, by = 'node', sort = FALSE)[, c('x', 'y')])
 food <- list(GP1 = food[1:6, ], GP2 = food[7:12, ])
@@ -137,6 +143,22 @@ c <- draw_nodes(pos,
 pos_det <- merge(hex, rbindlist(lapply(det, function(i){
 	i@data[, .N, by = 'node']
 }), idcol = TRUE)[, .(N = sum(N)), by = 'node'], by = 'node')
+
+# pos_det_trimmed <- data.table(merge(hex[hex$y > 1000, ], rbindlist(lapply(det, function(i){
+# 	x <- min(rbindlist(i@food)[['t']])
+# 	i@data[Frame <= x, .N, by = 'node']
+# }), idcol = TRUE)[, .(N = sum(N)), by = 'node'], by = 'node', all = TRUE))[is.na(N), N := 0]
+# 
+# draw_nodes(pos_det_trimmed, 
+# 	   add = draw_hexagons(edges, linewidth = 2, color = 'black',
+# 	   		    add = draw_hexagons(edges, linewidth = 2, color = 'black', 
+# 	   		    		    add = geom_foodpatches(fill = 'mediumpurple', alpha = 0.9))), 
+# 	   z = rank(pos_det_trimmed[['N']]), size = 4) + 
+# 	scale_fill_viridis('Occupancy',option = 'plasma', breaks = range(rank(pos_det_trimmed[['N']])),
+# 			   labels = c('Low', 'High')) +
+# 	theme(legend.position = 'bottom', aspect.ratio = 0.5,
+# 	      legend.margin = margin(t = -20, unit = 'pt'))+
+# 	guides(fill = guide_colorbar(title.position = 'top', barwidth = 15, title.hjust = 0.5))
 
 c2 <- draw_nodes(pos_det, 
 	   add = draw_hexagons(edges, linewidth = 2, color = 'black',
@@ -161,10 +183,10 @@ full_data <- rbindlist(lapply(files, function(i){
 }), idcol = TRUE)[order(Frame)]
 full_data_avg <- full_data[, .(N = mean(N)), by = 'Frame']
 
-foods <- rbindlist(lapply(files, function(i){
-	data.table(read_parquet(paste0(path, i,'_food.parquet')))[, c('t')]
-}), idcol = TRUE)[, .(mint = min(t), maxt = max(t)), by = '.id'][is.finite(mint),
-								 lapply(.SD, mean), .SDcols = c('mint', 'maxt')]
+# foods <- rbindlist(lapply(files, function(i){
+# 	data.table(read_parquet(paste0(path, i,'_food.parquet')))[, c('t')]
+# }), idcol = TRUE)[, .(mint = min(t), maxt = max(t)), by = '.id'][is.finite(mint),
+# 								 lapply(.SD, mean), .SDcols = c('mint', 'maxt')]
 foods <- rbindlist(lapply(files, function(i){
 	data.table(read_parquet(paste0(path, i,'_food.parquet')))[, c('t')]
 }), idcol = TRUE)[, .(mint = min(t), maxt = max(t)), by = '.id'][is.finite(mint),

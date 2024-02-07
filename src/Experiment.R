@@ -173,7 +173,12 @@ setMethod('get_I', 'Experiment', function(.Object){
 setMethod('compute_nodes', signature = 'Experiment', function(.Object){
         if(!'node' %in% colnames(.Object@data)){
                 
-                .Object@data$node <- get_node(.Object@data[, c('Xmm', 'Ymm')], xy = .Object@refcoords)
+                if(.hasSlot(.Object, 'refcoords')){
+                        .Object@data$node <- get_node(.Object@data[, c('Xmm', 'Ymm')], xy = .Object@refcoords) 
+                } else {
+                        .Object@data$node <- get_node(.Object@data[, c('Xmm', 'Ymm')]) 
+                }
+
                 
                 # clean memmory
                 do.call('gc', list(FALSE))
