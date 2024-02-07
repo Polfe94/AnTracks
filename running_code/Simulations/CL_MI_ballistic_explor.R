@@ -40,7 +40,7 @@ MI <- function(x, tw = 2400, shift = 300){
 			result[[i]] <- 0
 		}
 		do.call('gc', args = list(verbose = FALSE))
-		print(paste0('Iter ', i, ' complete; MI = ', round(result[[i]], 4), ' at time = ', sq[i]))
+		print(paste0('Iter ', i, ' complete; MI = ', round(sum(result[[i]]), 4), ' at time = ', sq[i]))
 	}
 	result
 }
@@ -53,4 +53,4 @@ sim_mi <- mclapply(X = seq_along(files),
 		   },
 		   mc.cores = nCores)
 
-save(sim_mi, file = '/home/usuaris/pol.fernandez/research/AnTracks/results/MI_ballistic_explor.RData')
+save(sim_mi, file = '/home/usuaris/pol.fernandez/research/AnTracks/results/MI_ballistic_explor_mod.RData')
