@@ -123,6 +123,21 @@ files <- unique(unlist(regmatches(files, gregexpr('default_\\d{1,2}', files))))
 
 #### SPATIAL DYNAMICS
 pos <- data.table(read_parquet(paste0(path, files[3], '_positions.parquet')))
+
+pos_data <- rbindlist(lapply(files, function(i){ ## <--- takes a couple of minutes and a bit of RAM
+	do.call('gc', args = list(verbose = FALSE))
+	data.table(read_parquet(paste0(path, i, '_data.parquet')))[, .(node = parse_nodes(pos))][, .N, by = 'node']
+}))
+
+sum_pos_data <- merge(hex_sim, pos_data[, .(N = sum(N)), by = 'node'], by = 'node')
+c <- draw_nodes(sum_pos_data, 
+	   add = draw_hexagons(sim_edges, linewidth = 2, color = 'black',
+	   		    add = draw_hexagons(sim_edges, linewidth = 2, color = 'black', 
+	   		    		    add = geom_foodpatches(food = food, fill = 'mediumpurple', alpha = 0.9))), 
+	   z = rank(sum_pos_data[['N']]), size = 4, show.legend = FALSE) + 
+	theme(aspect.ratio = 0.5)+
+	scale_fill_viridis(option = 'plasma')
+
 # POS <- rbindlist(lapply(seq_along(files), function(i){
 # 	data.table(read_parquet(paste0(path, files[i], '_positions.parquet')))
 # }))
@@ -132,13 +147,13 @@ pos <- data.table(read_parquet(paste0(path, files[3], '_positions.parquet')))
 food <- data.table(read_parquet(paste0(path, files[1], '_food.parquet')))[, node := revert_node(node)]
 food <- as.data.frame(merge(food, hex_sim, by = 'node', sort = FALSE)[, c('x', 'y')])
 food <- list(GP1 = food[1:6, ], GP2 = food[7:12, ])
-c <- draw_nodes(pos, 
-	   add = draw_hexagons(sim_edges, linewidth = 2, color = 'black',
-	   		    add = draw_hexagons(sim_edges, linewidth = 2, color = 'black', 
-	   		    		    add = geom_foodpatches(food = food, fill = 'mediumpurple', alpha = 0.9))), 
-	   z = pos[['z']], size = 4, show.legend = FALSE) + 
-	theme(aspect.ratio = 0.5)+
-	scale_fill_viridis(option = 'plasma')
+# c <- draw_nodes(pos, 
+# 	   add = draw_hexagons(sim_edges, linewidth = 2, color = 'black',
+# 	   		    add = draw_hexagons(sim_edges, linewidth = 2, color = 'black', 
+# 	   		    		    add = geom_foodpatches(food = food, fill = 'mediumpurple', alpha = 0.9))), 
+# 	   z = pos[['z']], size = 4, show.legend = FALSE) + 
+# 	theme(aspect.ratio = 0.5)+
+# 	scale_fill_viridis(option = 'plasma')
 
 pos_det <- merge(hex, rbindlist(lapply(det, function(i){
 	i@data[, .N, by = 'node']

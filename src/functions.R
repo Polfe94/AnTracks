@@ -19,16 +19,18 @@ theme_set(ggplot2::theme_classic() + ggplot2::theme(axis.title = element_text(si
                                                     strip.text = element_text(size = 15, margin = margin(t = 5, b = 5))))
 
 #### +++ GENERIC FUNCTIONS +++ ####
-compute_edges <- function(refcoords = hex[hex$y > 1000, ], r = 51){
+compute_edges <- function(refcoords = hex[hex$y > 1000, ], r = 51, unique = TRUE){
      xy <- as.matrix(refcoords[, c('x', 'y')])
      
      d <- pdist(xy, xy)
      idx <- which(d < r & d > 0, arr.ind = TRUE)
      
      # get rid of duplicated indices due to square matrix
-     idx <- t(apply(idx, 1, sort)) 
-     idx <- unique(idx)
-     
+     if(unique){
+         idx <- t(apply(idx, 1, sort)) 
+         idx <- unique(idx)
+     }
+
      edges <- data.frame(x = xy[idx[, 1], 1], y = xy[idx[, 1], 2],
                                 xend = xy[idx[, 2], 1], yend = xy[idx[, 2], 2],
                                 o = refcoords$node[idx[, 1]], d = refcoords$node[idx[, 2]])
@@ -111,7 +113,6 @@ get_node <- function(...){
                idx <- which.min(pdist(t(x), xy))
           } else {
                if(dim(x)[2] == 2){
-                       # idx <- apply(fastPdist2(as.matrix(x), xy), 1, which.min) 
                     idx <- apply(pdist(as.matrix(x), xy), 1, which.min)
                } else {
                     stop('Object must have X and Y coordinates')
@@ -122,6 +123,44 @@ get_node <- function(...){
           stop('Could not read coordinates')
      }
      n[idx]
+}
+
+#' Returns the closest node to the provided coordinate
+#' 
+#' @param ... one of [1] 'data.frame' with 2 dimensions, [2] 'numeric' of length 2, [3] two 'numeric' of length 1
+#' @return numeric vector of length equal to the number of coordinates passed to the function
+get_segment <- function(...){
+    l <- list(...)
+    if('xy' %in% names(l)){
+        xy <- as.matrix(l$xy[, c('x', 'y')])
+        n <- l$xy$node
+        l$xy <- NULL
+    } else {
+        xy <- as.matrix(hex[, c('x', 'y')])
+        n <- hex$node
+    }
+    if(length(l) == 2){
+        d <- pdist(t(do.call('c', l)), xy)
+    } else if(length(l) == 1){
+        x <- l[[1]]
+        if(is.atomic(x)){
+            d <- pdist(t(x), xy)
+        } else {
+            if(dim(x)[2] == 2){
+                d <- pdist(as.matrix(x), xy)
+
+            } else {
+                stop('Object must have X and Y coordinates')
+            }
+        }
+        
+    } else {
+        stop('Could not read coordinates')
+    }
+    t(apply(d, 1, function(i){
+        l <- sort(i, index.return = TRUE)[['ix']]
+        cbind(l[1], l[2])
+    }))
 }
 
 #' Computes the pairwise euclidean distance between two sets of coordinates
@@ -581,19 +620,32 @@ NumericVector movingAverage(NumericVector x, int t, int overlap = 0) {
 }
 ')
 
-parse_nodes <- function(nodes, pattern = '\\(\\d{1,2}, \\d{1,2}\\)'){
-    # x <- unique(unlist(strsplit(nodes, '; ')))
-    # y <- str_extract(x, pattern)
-    # ids <- str_extract(x, '\\d{1,2}')
-    # idx <- !duplicated(ids, fromLast = TRUE)
-    # y[idx]
-    str_extract(unique(unlist(strsplit(nodes, '; '))), pattern)
-    # data.table(node_label = x)[hex_sim, node := i.node, on = 'node_label'][['node']]
-    # merge(data.table(node_label = x), hex_sim, by = 'node_label')[['node']]
+# parse_nodes <- function(nodes, pattern = '\\(\\d{1,2}, \\d{1,2}\\)'){
+#     # x <- unique(unlist(strsplit(nodes, '; ')))
+#     # y <- str_extract(x, pattern)
+#     # ids <- str_extract(x, '\\d{1,2}')
+#     # idx <- !duplicated(ids, fromLast = TRUE)
+#     # y[idx]
+#     str_extract(unique(unlist(strsplit(nodes, '; '))), pattern)
+#     # data.table(node_label = x)[hex_sim, node := i.node, on = 'node_label'][['node']]
+#     # merge(data.table(node_label = x), hex_sim, by = 'node_label')[['node']]
+# }
+
+# parse_ids <- function(nodes, pattern = '\\d{1,2}'){
+#     as.integer(str_extract(unique(unlist(strsplit(nodes, '; '))), pattern))
+# }
+
+revert_node <- function(n){
+    n <- do.call('rbind', n)
+    apply(n, 1, function(i) paste0('(', paste0(i, collapse = ', '), ')'))
 }
 
-parse_ids <- function(nodes, pattern = '\\d{1,2}'){
-    as.integer(str_extract(unique(unlist(strsplit(nodes, '; '))), pattern))
+parse_nodes <- function(nodes){
+    unlist(strsplit(nodes, ';'))
+}
+
+parse_ids <- function(ids){
+    as.integer(unlist(strsplit(ids, ',')))
 }
 
 compute_neighbors <- function(refcoords = hex[hex$y > 1000, ], r = 51){

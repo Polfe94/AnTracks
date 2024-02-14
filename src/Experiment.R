@@ -146,6 +146,10 @@ setGeneric('get_eff', function(.Object){
         standardGeneric('get_eff')
 })
 
+setGeneric('move_stats', function(.Object, scouts = 'LR', maxt = 2400, maxd = 500, min_pos = 10){
+        standardGeneric('move_stats')
+})
+
 #### +++ CLASS METHODS +++ ####
 setMethod('get_N', 'Experiment', function(.Object){
         dt <- data.table(.Object@data)
@@ -433,6 +437,35 @@ setMethod('get_eff', 'Experiment', function(.Object){
         .tp2 <- .tp2[, end_frame := ifelse(end_frame < food[2], end_frame, food[2])]
         tp2_value <- sum(.tp2[, end_frame] - .tp2[, start_frame])/2
         data.table(tp1 = tp1_value, tp2 = tp2_value)
+})
+
+setMethod('move_stats', 'Experiment', function(.Object, scouts = 'LR', maxt = 2400, maxd = 500, min_pos = 10){
+        data <- setDT(.Object@data)[Frame <= maxt]
+        dmatrix <- pdist(as.matrix(data[, c('Xmm', 'Ymm')]), as.matrix(hex[hex$node == 634, c('x', 'y')]))
+        set(data, j = 'd', value = as.numeric(dmatrix))
+        inds <- unique(data[d > maxd, N_ind])
+        if(scouts == 'SR'){
+                inds <- unique(data[!N_ind %in% inds, N_ind])
+                # idx <- data[, .(idx = which.min(abs((d - maxd)))), by = 'N_ind'][['idx']]
+        } else {
+                # idx <- data[, .(idx = which.max((d - maxd)> 0)), by = 'N_ind'][['idx']]
+        }
+        
+        data <- data[N_ind %in% inds]
+        
+        result <- as.data.frame(t(vapply(seq_along(inds), function(ii){
+                sbst <- data[N_ind == inds[ii]]
+                xy <- TrajFromCoords(sbst[, c('Xmm', 'Ymm', 'Frame')], fps = 2)
+                if(nrow(xy) > min_pos){
+                        c(TrajStraightness(xy), TrajDistance(xy), TrajLength(xy), 
+                          mean(as.numeric(Mod(TrajVelocity(xy))), na.rm = TRUE), 
+                          mean(as.numeric(Mod(TrajAcceleration(xy))), na.rm = TRUE),
+                          nrow(xy) / 120, nrow(sbst)/120)
+                } else {rep(0, 7)}
+                
+        }, numeric(7))))
+        colnames(result) <- c('Straightness', 'Diffusion', 'Distance', 'Mean_v', 'Mean_acc', 'Time', 'Total_time')
+        result[result[['Time']] > 0, ]
 })
 
 #### +++ VISUALIZATION METHODS +++ ####
