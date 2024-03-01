@@ -38,7 +38,10 @@ dt <- data.table(do.call('cbind', foodlist))
 colnames(dt) <- paste0('Exp_', seq_len(ncol(dt)))
 
 detect_times <- data.table(do.call('cbind', lapply(1:9, function(i){
-	do.call('rbind', sto[[i]]@food)[['t']]/2
+	# relative to the first ant that left the nest
+	do.call('rbind', sto[[i]]@food)[['t']]/2 - min(sto[[i]]@data[['Time_sec']])
+	# absolute times
+	# do.call('rbind', sto[[i]]@food)[['t']]/2 - min(sto[[i]]@data[['Time_sec']])
 })))
 colnames(detect_times) <- paste0('Exp_', seq_len(ncol(detect_times)))
 
@@ -67,7 +70,8 @@ draw_hexagons(alpha = 0.15) +
 	annotate('text', label = paste0(max(subhex[['x']])-min(subhex[['x']]), ' mm'), 
 		 y = min(subhex[['y']])+nudge*2, 
 		 x = (max(subhex[['x']])+min(subhex[['x']]))/2)+
-	annotate('text', label = subhex[['label']], x= subhex[['x']], y=subhex[['y']])
+	annotate('text', label = subhex[['label']], x= subhex[['x']], y=subhex[['y']])+
+	geom_point(data = subhex[node == 634], aes(x, y-20), size = 4, shape = 24, fill = 'blue')
 dev.off()
 
 
@@ -87,3 +91,36 @@ dev.off()
 # 		 x = subhex[label %in% foodlist[[i]], x],
 # 		 y = subhex[label %in% foodlist[[i]], y])
 # }),labels = seq_along(foodlist))
+
+for(i in seq_along(foodlist)){
+	png(paste0('/home/polfer/research/papers/MATHEMATICS_OF_MOVEMENT/food_distrib_',i,'.png'),
+	    1920, 1080, res = 100)
+	print(draw_hexagons(alpha = 0.15, add = geom_foodpatches(sto[[i]]@food, alpha = 0.3)) + 
+		geom_segment(data = data, aes(x = xmin, xend = xmax,
+					      y = ymin, yend = ymax, group = label),
+			     arrow = arrow(length= unit(0.015, 'npc'), ends = 'both', type = 'closed'))+
+		annotate('text', label = paste0(max(subhex[['y']])-min(subhex[['y']]), ' mm'), 
+			 x = min(subhex[['x']])+nudge*2, 
+			 y = (max(subhex[['y']])+min(subhex[['y']]))/2, angle = 90)+
+		annotate('text', label = paste0(max(subhex[['x']])-min(subhex[['x']]), ' mm'), 
+			 y = min(subhex[['y']])+nudge*2, 
+			 x = (max(subhex[['x']])+min(subhex[['x']]))/2)+
+		annotate('text', label = subhex[['label']], x= subhex[['x']], y=subhex[['y']])+
+		geom_point(data = subhex[node == 634], aes(x, y-20), size = 4, shape = 24, fill = 'blue'))
+	dev.off()
+}
+png('/home/polfer/research/papers/MATHEMATICS_OF_MOVEMENT/lattice_representation.png',
+    1920, 1080, res = 100)
+draw_hexagons(alpha = 0.15) + 
+	geom_segment(data = data, aes(x = xmin, xend = xmax,
+				      y = ymin, yend = ymax, group = label),
+		     arrow = arrow(length= unit(0.015, 'npc'), ends = 'both', type = 'closed'))+
+	annotate('text', label = paste0(max(subhex[['y']])-min(subhex[['y']]), ' mm'), 
+		 x = min(subhex[['x']])+nudge*2, 
+		 y = (max(subhex[['y']])+min(subhex[['y']]))/2, angle = 90)+
+	annotate('text', label = paste0(max(subhex[['x']])-min(subhex[['x']]), ' mm'), 
+		 y = min(subhex[['y']])+nudge*2, 
+		 x = (max(subhex[['x']])+min(subhex[['x']]))/2)+
+	annotate('text', label = subhex[['label']], x= subhex[['x']], y=subhex[['y']])+
+	geom_point(data = subhex[node == 634], aes(x, y-20), size = 4, shape = 24, fill = 'blue')
+dev.off()

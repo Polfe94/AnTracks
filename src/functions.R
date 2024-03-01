@@ -9,6 +9,8 @@ library(ggplot2)
 library(jsonlite)
 library(ggnewscale)
 library(scales) 
+library(arrow)
+library(latex2exp)
 
 
 ## --- SET GGPLOT THEME --- ##

@@ -59,6 +59,31 @@ draw_nodes <- function(coords = NULL, add = NULL, z = NULL, ...){
                                          axis.line = element_blank())
 }
 
+
+draw_traffic_flow <- function(edges = NULL, add = NULL, ...){
+        
+        if(is.null(edges)){
+                edges <- compute_edges(hex[hex$y > 1000, ])
+        }
+        
+        if(!is.null(add)){
+                pl <- add
+        } else {
+                pl <- ggplot()
+        }
+        
+        pl <- pl + geom_segment(data = edges, 
+                                aes(x = x, xend = xend, y = y,
+                                    yend = yend, size = z**1.2), color = 'black',
+                                show.legend = FALSE, ...) +
+                geom_segment(data = edges, 
+                             aes(x = x, xend = xend, y = y,
+                                 yend = yend, color = z, size = z), ...)
+        
+        pl + xlab('') + ylab('') + theme(axis.text = element_blank(), axis.ticks = element_blank(),
+                                         axis.line = element_blank())
+}
+
 geom_circle <- function(center, r, npoints = 100, ...){
      sq <- seq(0, 2*pi, length.out = npoints)
      if(is.data.frame(center)){
