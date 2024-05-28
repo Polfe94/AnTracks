@@ -9,6 +9,18 @@ nexp <- function(x, a, k){
 	fx
 }
 
+## Exponential trend
+fexp <- function(x, a, k){
+	fx <- a*exp(k*x)
+	fx
+}
+
+## Exponential trend
+fexpC <- function(x, a, k, C){
+	fx <- a*exp(k*x) + C
+	fx
+}
+
 ## Negative double exponential trend
 doub_nexp <- function(x, a, k, a2, k2){
 	fx <- a*exp(-k*x) + a2*exp(-k2*x)

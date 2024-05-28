@@ -101,8 +101,8 @@ A <- ggplot(data = fulldf, aes(Frame, N)) +
 	scale_x_continuous('Time (min)', breaks = seq(0, 180*120, 50*120),
 			   labels = seq(0, 180, 50))+
 	scale_color_manual('', values = c('dodgerblue3', rep('black', 4)),
-			   labels = c('Interactions', 'Occupancy'))+
-	scale_y_continuous('Occupancy (number of ants)',
+			   labels = c('Interactions', 'Activity'))+
+	scale_y_continuous('Activity (Number of ants)',
 			   breaks = seq(0, 60, length.out = 7),
 			   labels = seq(0, 60, length.out = 7),
 			   
@@ -117,7 +117,7 @@ A <- ggplot(data = fulldf, aes(Frame, N)) +
 	      strip.text = element_text(size = 18, margin = margin(b = 5, t = 5)),
 	      aspect.ratio = 0.75)
 
-png('~/research/papers/SPIN_GLASSES/Figs_spinGlasses/Fig_Occupancy.png', width = 3600, height = 1000, res = 200)
+png('~/research/papers/SPIN_GLASSES/Figs_spinGlasses/Fig_Activity.png', width = 3600, height = 1000, res = 200)
 A
 dev.off()
 
@@ -160,9 +160,17 @@ beepr::beep(3)
 
 t0 <- Sys.time()
 for(i in seq_along(nf)){
-	nf_phases <- mutual_info(nf[[i]], t = 1:21600, edges)
+	tmin <- nf[[i]]@data[1, Frame]
+	tmax <- nf[[i]]@data[nrow(nf[[i]]@data), Frame]
+	if(tmax > 21600) tmax <- 21600
+	nf_phases[[i]] <- mutual_info(nf[[i]], t = tmin:tmax, edges)
 }
 Sys.time() - t0
+# nf_phases <- lapply(nf[-c(1,2)], mutual_info, t = 1:21600, edges = edges)
+# for(i in seq_along(nf)){
+# 	nf_phases[[i]] <- mutual_info(nf[[i]], t = 1:21600, edges)
+# }
+# Sys.time() - t0
 beepr::beep(3)
 
 zdet <- list(z1 = apply(do.call('rbind', det_phases$p1), 2, mean),
@@ -171,9 +179,10 @@ zdet <- list(z1 = apply(do.call('rbind', det_phases$p1), 2, mean),
 zsto <- list(z1 = apply(do.call('rbind', sto_phases$p1), 2, mean),
 	     z2 = apply(do.call('rbind', sto_phases$p2), 2, mean),
 	     z3 = apply(do.call('rbind', sto_phases$p3), 2, mean))
-znf <- list(z1 = nf_phases)
+znf <- list(z1 = apply(do.call('rbind', nf_phases), 2, mean))
 
-supervec <- rank(c(unlist(zdet), unlist(zsto), nf_phases, recursive = T))
+# supervec <- rank(c(unlist(zdet), unlist(zsto), nf_phases, recursive = T))
+supervec <- rank(c(unlist(zdet), unlist(zsto), znf, recursive = T))
 ztotal <- list(d1 = supervec[1:(length(supervec)/7)],
 	       d2 = supervec[(length(supervec)/7 + 1):(2*length(supervec)/7)],
 	       d3 = supervec[(2*length(supervec)/7 + 1):(3*length(supervec)/7)],

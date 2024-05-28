@@ -176,3 +176,31 @@ geom_food <- function(t,
         
         rectangle_geom
 }
+
+## Function to enhance resolution of a heatmap
+enhance_land_res <- function(land, xvar, yvar, zvar, spar=0.5, n = 200){
+        x <- seq(min(land[[xvar]]), max(land[[xvar]]), length.out = n)
+        y <- seq(min(land[[yvar]]), max(land[[yvar]]), length.out = n)
+        ## Loop over xvar
+        yDT <- rbindlist(lapply(unique(land[[xvar]]), function(xi){
+                indx <- which(land[[xvar]] == xi)
+                data.table(x=xi, y=y, z=predict(smooth.spline(land[[yvar]][indx], land[[zvar]][indx], spar=spar),
+                                                y)$y)
+        }))
+        
+        ## Loop over yvar
+        res <- rbindlist(lapply(unique(yDT[['y']]), function(yi){
+                indx <- which(yDT[['y']] == yi)
+                data.table(x=x, y=yi, z=predict(smooth.spline(yDT[['x']][indx], yDT[['z']][indx], spar=spar),
+                                                x)$y)
+        }))
+        
+        ## Rename land
+        setnames(res, old=c('x','y','z'), new=c(xvar, yvar, zvar))
+        
+        ## Reorder land
+        setorderv(res, cols=xvar)
+        
+        ## Return land
+        res
+}  

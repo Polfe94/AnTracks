@@ -198,7 +198,7 @@ ggplot(data = median_tp1,
 							     limits = c(0.0009, 0.0028),
 							     option = 'C') +
 	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+ 
-	facet_wrap(~.id)
+	facet_wrap(~.id)+ theme(aspect.ratio = 1)
 
 
 median_tp2 <- rbindlist(list(LR = result_LR[is.finite(tp2), .(tp2 = 1/median(tp2)), by = c('rho', 'eps')],
@@ -206,9 +206,76 @@ median_tp2 <- rbindlist(list(LR = result_LR[is.finite(tp2), .(tp2 = 1/median(tp2
 	       both = result_both[is.finite(tp2), .(tp2 = 1/median(tp2)), by = c('rho', 'eps')]), idcol = TRUE)
 ggplot(data = median_tp2,
        aes(rho, eps, fill = tp2)) +
-	geom_raster(interpolate = TRUE) + scale_fill_viridis('Exploitation efficiency', 
-					      limits = c(4.5e-4, 9e-4), breaks = seq(4e-4,8e-4, 2e-4),
+	geom_raster(interpolate = TRUE) + scale_fill_viridis('Exploitation efficiency', breaks = seq(4e-4,8e-4, 2e-4),
 					      option = 'C') +
+	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+ 
+	facet_wrap(~.id)+ theme(aspect.ratio = 1)
+
+median_tradeoff <- rbindlist(list(LR = result_LR[is.finite(tp2), .(tp2 = median(tp1/(tp1 +tp2))), by = c('rho', 'eps')],
+			     SR = result_SR[is.finite(tp2), .(tp2 = median(tp1/(tp1 +tp2))), by = c('rho', 'eps')],
+			     both = result_both[is.finite(tp2), .(tp2 = median(tp1/(tp1 +tp2))), by = c('rho', 'eps')]), idcol = TRUE)
+ggplot(data = median_tradeoff,
+       aes(rho, eps, fill = tp2)) +
+	geom_raster(interpolate = TRUE) + 
+	scale_fill_viridis('Exploration-exploitation trade-off',
+							     option = 'C') +
+	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+ 
+	facet_wrap(~.id)+ theme(aspect.ratio = 1)
+
+median_total <- rbindlist(list(LR = result_LR[is.finite(tp2), .(tp2 = median((tp1 +tp2))/120), by = c('rho', 'eps')],
+				  SR = result_SR[is.finite(tp2), .(tp2 = median((tp1 +tp2))/120), by = c('rho', 'eps')],
+				  both = result_both[is.finite(tp2), .(tp2 = median((tp1 +tp2))/120), by = c('rho', 'eps')]), idcol = TRUE)
+ggplot(data = median_total,
+       aes(rho, eps, fill = tp2)) +
+	geom_raster(interpolate = TRUE) + 
+	scale_fill_viridis('Total time',
+			   option = 'C') +
+	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+ 
+	facet_wrap(~.id) + theme(aspect.ratio = 1)
+
+
+######### MEANS
+
+mean_tp1 <- rbindlist(list(LR = result_LR[is.finite(tp1), .(tp1 = 1/mean(tp1)), by = c('rho', 'eps')],
+			     SR = result_SR[is.finite(tp1), .(tp1 = 1/mean(tp1)), by = c('rho', 'eps')],
+			     both = result_both[is.finite(tp1), .(tp1 = 1/mean(tp1)), by = c('rho', 'eps')]), idcol = TRUE)
+ggplot(data = mean_tp1,
+       aes(rho, eps, fill = tp1)) +
+	geom_raster(interpolate = TRUE) + scale_fill_viridis('Exploration efficiency',
+							     option = 'C') +
+	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+ 
+	facet_wrap(~.id)
+
+
+mean_tp2 <- rbindlist(list(LR = result_LR[is.finite(tp2), .(tp2 = 1/mean(tp2)), by = c('rho', 'eps')],
+			     SR = result_SR[is.finite(tp2), .(tp2 = 1/mean(tp2)), by = c('rho', 'eps')],
+			     both = result_both[is.finite(tp2), .(tp2 = 1/mean(tp2)), by = c('rho', 'eps')]), idcol = TRUE)
+ggplot(data = mean_tp2,
+       aes(rho, eps, fill = tp2)) +
+	geom_raster(interpolate = TRUE) + scale_fill_viridis('Exploitation efficiency',
+							     option = 'C') +
+	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+ 
+	facet_wrap(~.id)
+
+mean_tradeoff <- rbindlist(list(LR = result_LR[is.finite(tp2), .(tp2 = mean(tp1/(tp1 +tp2))), by = c('rho', 'eps')],
+				  SR = result_SR[is.finite(tp2), .(tp2 = mean(tp1/(tp1 +tp2))), by = c('rho', 'eps')],
+				  both = result_both[is.finite(tp2), .(tp2 = mean(tp1/(tp1 +tp2))), by = c('rho', 'eps')]), idcol = TRUE)
+ggplot(data = mean_tradeoff,
+       aes(rho, eps, fill = tp2)) +
+	geom_raster(interpolate = TRUE) + 
+	scale_fill_viridis('Exploration-exploitation trade-off',
+			   option = 'C') +
+	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+ 
+	facet_wrap(~.id)
+
+mean_total <- rbindlist(list(LR = result_LR[is.finite(tp2), .(tp2 = mean((tp1 +tp2))/120), by = c('rho', 'eps')],
+			       SR = result_SR[is.finite(tp2), .(tp2 = mean((tp1 +tp2))/120), by = c('rho', 'eps')],
+			       both = result_both[is.finite(tp2), .(tp2 = mean((tp1 +tp2))/120), by = c('rho', 'eps')]), idcol = TRUE)
+ggplot(data = mean_total,
+       aes(rho, eps, fill = tp2)) +
+	geom_raster(interpolate = TRUE) + 
+	scale_fill_viridis('Total time',
+			   option = 'C') +
 	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+ 
 	facet_wrap(~.id)
 
@@ -234,6 +301,19 @@ ggplot(data = result_LR[is.finite(tp2), .(tp2 = 1/median(tp2)), by = c('rho', 'e
 ggplot(data = result_LR[is.finite(tp2), .(tp2 = 1/median(tp2)), by = c('rho', 'eps')],
        aes(rho, eps, fill = tp2)) +
 	geom_raster(interpolate = TRUE) + scico::scale_fill_scico('Exploitation efficiency') +
+	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+
+	ggtitle('LR ignore social feedbacks')+
+	scale_fill_viridis_c('Exploitation efficiency', option = 'C') 
+ggplot(data = result_SR[is.finite(tp2), .(tp2 = 1/median(tp2)), by = c('rho', 'eps')],
+       aes(rho, eps, fill = tp2)) +
+	geom_raster(interpolate = TRUE) + scico::scale_fill_scico('Exploitation efficiency') +
+	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+
+	ggtitle('SR ignore social feedbacks')+
+	scale_fill_viridis_c('Exploitation efficiency', option = 'C') 
+ggplot(data = result_both[is.finite(tp2), .(tp2 = 1/median(tp2)), by = c('rho', 'eps')],
+       aes(rho, eps, fill = tp2)) +
+	geom_raster(interpolate = TRUE) + 
+	scico::scale_fill_scico('Exploitation efficiency') +
 	xlab(TeX('Proportion of LR ($\\rho$)'))+ylab(TeX('Proportion of listeners ($\\epsilon$)'))+
 	ggtitle('LR ignore social feedbacks')
 
