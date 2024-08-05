@@ -1,6 +1,5 @@
 source('~/research/gits/AnTracks/src/Experiment.R')
 source('~/research/gits/AnTracks/src/Simulation.R')
-source('~/research/gits/AnTracks/src/fit_functions.R')
 load('~/research/gits/AnTracks/data/nf.RData')
 load('~/research/gits/AnTracks/data/det.RData')
 # load('~/research/gits/AnTracks/results/mov_rho_R.RData')
