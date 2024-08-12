@@ -8,6 +8,7 @@ library(arrow)
 load('~/research/gits/AnTracks/data/det.RData')
 load('~/research/gits/AnTracks/data/nf.RData')
 
+mov_rho_R <- rbindlist(mov_rho_R)
 
 ## ANALYSIS 1 : FPT ####
 
@@ -23,7 +24,7 @@ foodnodes <- unlist(lapply(det[1], function(i){
 
 det_times <- unlist(lapply(det, function(i){
 	f <- min(rbindlist(i@food)[['t']])
-	f - i@data[1, Frame]
+	f - setDT(i@data)[1, Frame]
 }))
 det_times <- c(range(det_times), mean(det_times))
 
