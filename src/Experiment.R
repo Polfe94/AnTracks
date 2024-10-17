@@ -146,8 +146,20 @@ setGeneric('get_eff', function(.Object){
         standardGeneric('get_eff')
 })
 
-setGeneric('move_stats', function(.Object, scouts = 'LR', maxt = 2400, maxd = 500, min_pos = 10){
+# setGeneric('move_stats', function(.Object, scouts = 'LR', maxt = 2400, maxd = 500, min_pos = 10){
+#         standardGeneric('move_stats')
+# })
+
+setGeneric('move_stats', function(.Object, ...){
         standardGeneric('move_stats')
+})
+
+setGeneric('get_straightness', function(.Object, ...){
+        standardGeneric('get_straightness')
+})
+
+setGeneric('class_ids', function(.Object, dists = list(det = 200, sto = NA, nf = 350)){
+        standardGeneric('class_ids')
 })
 
 #### +++ CLASS METHODS +++ ####
@@ -439,33 +451,124 @@ setMethod('get_eff', 'Experiment', function(.Object){
         data.table(tp1 = tp1_value, tp2 = tp2_value)
 })
 
-setMethod('move_stats', 'Experiment', function(.Object, scouts = 'LR', maxt = 2400, maxd = 500, min_pos = 10){
-        data <- setDT(.Object@data)[Frame <= maxt]
-        dmatrix <- pdist(as.matrix(data[, c('Xmm', 'Ymm')]), as.matrix(hex[hex$node == 634, c('x', 'y')]))
-        set(data, j = 'd', value = as.numeric(dmatrix))
-        inds <- unique(data[d > maxd, N_ind])
-        if(scouts == 'SR'){
-                inds <- unique(data[!N_ind %in% inds, N_ind])
-                # idx <- data[, .(idx = which.min(abs((d - maxd)))), by = 'N_ind'][['idx']]
-        } else {
-                # idx <- data[, .(idx = which.max((d - maxd)> 0)), by = 'N_ind'][['idx']]
+setMethod('move_stats', 'Experiment', function(.Object, ...){
+        require(trajr)
+        .Object <- class_ids(.Object, ...)
+        data <- .Object@data[type != 'UNKNOWN']
+        ids <- data[, unique(N_ind)]
+        
+        rbindlist(lapply(seq_along(ids), function(i){
+                sbst <- data[N_ind == ids[i]]
+                xy <- TrajFromCoords(sbst[, c('Xmm', 'Ymm', 'Frame')], fps = 2)
+                
+                # slight filter
+                if(nrow(xy) > 10){
+                        d <- which.max(as.numeric(pdist(as.matrix(sbst[, c('Xmm', 'Ymm')]), 
+                                                        as.matrix(hex[hex$node == 634, c('x', 'y')]))))
+                        df <- data.frame(v = mean(Mod(TrajVelocity(xy)), na.rm = TRUE),
+                                         acc = mean(Mod(TrajAcceleration(xy)), na.rm = TRUE),
+                                         # l = TrajLength(xy),
+                                         d = TrajDistance(xy, endIndex = d),
+                                         t = TrajDuration(xy))
+                } else {
+                        # df <- data.frame(v = NA, acc = NA, l = NA, d = NA, t = NA)
+                        df <- data.frame(v = NA, acc = NA, d = NA, t = NA)
+                }
+                df[['type']] <- sbst[, unique(type)]
+                df[d > 0]
+        }), idcol = 'ind')
+})
+
+setMethod('get_straightness', 'Experiment', function(.Object, ...){
+        require(trajr)
+        .Object <- class_ids(.Object, ...)
+        data <- .Object@data[type != 'UNKNOWN']
+        ids <- data[, unique(N_ind)]
+        
+        rbindlist(lapply(seq_along(ids), function(i){
+                sbst <- data[N_ind == ids[i]]
+                xy <- TrajFromCoords(sbst[, c('Xmm', 'Ymm', 'Frame')], fps = 2)
+                
+                # slight filter
+                if(nrow(xy) > 10){
+                        Ls <- vapply(2:nrow(xy), function(x) TrajLength(xy, endIndex = x), numeric(1))
+                        maxL <- max(Ls)
+                        if(maxL >= 100){
+                                idxs <- vapply(seq(100, max(Ls), 100), function(x) which.min(abs(Ls - x)), numeric(1))
+                        } else {
+                                idxs <- nrow(xy)
+                        }
+                        straightness <- vapply(idxs, function(l) TrajStraightness(xy[seq_len(l)]), numeric(1))
+                        data.frame(l = Ls[idxs], s = straightness)
+                } else {
+                        df <- data.frame(l = NA, s = NA)
+                }
+                df[['type']] <- sbst[, unique(type)]
+        }), idcol = 'ind')
+})
+
+
+# setMethod('move_stats', 'Experiment', function(.Object, scouts = 'LR', maxt = 2400, maxd = 500, min_pos = 10){
+#         data <- setDT(.Object@data)[Frame <= maxt]
+#         dmatrix <- pdist(as.matrix(data[, c('Xmm', 'Ymm')]), as.matrix(hex[hex$node == 634, c('x', 'y')]))
+#         set(data, j = 'd', value = as.numeric(dmatrix))
+#         inds <- unique(data[d > maxd, N_ind])
+#         if(scouts == 'SR'){
+#                 inds <- unique(data[!N_ind %in% inds, N_ind])
+#                 # idx <- data[, .(idx = which.min(abs((d - maxd)))), by = 'N_ind'][['idx']]
+#         } else {
+#                 # idx <- data[, .(idx = which.max((d - maxd)> 0)), by = 'N_ind'][['idx']]
+#         }
+#         
+#         data <- data[N_ind %in% inds]
+#         
+#         result <- as.data.frame(t(vapply(seq_along(inds), function(ii){
+#                 sbst <- data[N_ind == inds[ii]]
+#                 xy <- TrajFromCoords(sbst[, c('Xmm', 'Ymm', 'Frame')], fps = 2)
+#                 if(nrow(xy) > min_pos){
+#                         c(TrajStraightness(xy), TrajDistance(xy), TrajLength(xy), 
+#                           mean(as.numeric(Mod(TrajVelocity(xy))), na.rm = TRUE), 
+#                           mean(as.numeric(Mod(TrajAcceleration(xy))), na.rm = TRUE),
+#                           nrow(xy) / 120, nrow(sbst)/120)
+#                 } else {rep(0, 7)}
+#                 
+#         }, numeric(7))))
+#         colnames(result) <- c('Straightness', 'Diffusion', 'Distance', 'Mean_v', 'Mean_acc', 'Time', 'Total_time')
+#         result[result[['Time']] > 0, ]
+# })
+
+setMethod('class_ids',
+          'Experiment', # dists are the breakpoint between the two <distance> scales
+          function(.Object, dists = list(det = 200, sto = NA, nf = 350)){
+        
+        if('type' %in% colnames(.Object@data)){
+                return(.Object)
         }
         
-        data <- data[N_ind %in% inds]
+        setDT(.Object@data)
+        .Object@data[['type']] <- 'UNKNOWN'
         
-        result <- as.data.frame(t(vapply(seq_along(inds), function(ii){
-                sbst <- data[N_ind == inds[ii]]
-                xy <- TrajFromCoords(sbst[, c('Xmm', 'Ymm', 'Frame')], fps = 2)
-                if(nrow(xy) > min_pos){
-                        c(TrajStraightness(xy), TrajDistance(xy), TrajLength(xy), 
-                          mean(as.numeric(Mod(TrajVelocity(xy))), na.rm = TRUE), 
-                          mean(as.numeric(Mod(TrajAcceleration(xy))), na.rm = TRUE),
-                          nrow(xy) / 120, nrow(sbst)/120)
-                } else {rep(0, 7)}
-                
-        }, numeric(7))))
-        colnames(result) <- c('Straightness', 'Diffusion', 'Distance', 'Mean_v', 'Mean_acc', 'Time', 'Total_time')
-        result[result[['Time']] > 0, ]
+        # init max time and distance to classify ants
+        maxd <- dists[[.Object@type]]
+        if(length(.Object@food)){
+                maxt <- min(rbindlist(.Object@food)[['t']])
+        } else {
+                maxt <- .Object@data[, max(Frame)]		
+        }
+        
+        # subset data
+        data <- setDT(.Object@data)[Frame <= maxt]
+        data[['d']] <- as.numeric(pdist(as.matrix(data[, c('Xmm', 'Ymm')]), 
+                                        as.matrix(hex[hex$node == 634, c('x', 'y')])))
+        
+        ids <- data[, unique(N_ind)]
+        scouts <- unique(data[d > maxd, N_ind])
+        recruits <- ids[!ids %in% scouts]
+        
+        .Object@data[N_ind %in% scouts, 'type'] <- 'Scout'
+        .Object@data[N_ind %in% recruits, 'type'] <- 'Recruit'
+        
+        .Object
 })
 
 #### +++ VISUALIZATION METHODS +++ ####
@@ -569,3 +672,5 @@ setMethod('plot_IiT', 'Experiment', function(.Object, norm = FALSE, ...){
         pl + geom_food(t = t, ylim = range(ylim), ...) +
                 guides(color = guide_legend(override.aes = list(size = 2)))
 })
+
+
