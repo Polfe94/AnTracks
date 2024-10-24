@@ -11,6 +11,7 @@ library(ggnewscale)
 library(scales) 
 library(arrow)
 library(latex2exp)
+library(Rcpp)
 
 
 ## --- SET GGPLOT THEME --- ##
@@ -95,6 +96,66 @@ get_direction <- function(x){
         }
         last_move
 }
+
+
+#' Takes a matrix of N rows
+get_directions_cpp <- cppFunction('
+IntegerVector get_directions_cpp(NumericMatrix x) {
+    // Ensure x is a matrix with at least 3 rows and 2 columns
+    if (x.nrow() < 3 || x.ncol() != 2) {
+        Rcpp::stop("Input must be a matrix with at least 3 rows and 2 columns.");
+    }
+
+    int n = x.nrow();  // Number of rows
+    IntegerVector results(n - 2);  // Vector to store results for triplets
+
+    for (int i = 2; i < n; i++) {
+        NumericVector point1 = x.row(i - 2);
+        NumericVector point2 = x.row(i - 1);
+        NumericVector point3 = x.row(i);
+
+        int last_move;
+
+        // Directly compare the two vectors
+        bool equal = true;
+        for (int j = 0; j < 2; j++) {
+            if (Rcpp::NumericVector::is_na(point1[j]) || Rcpp::NumericVector::is_na(point2[j]) || Rcpp::NumericVector::is_na(point3[j])) {
+                equal = false;
+                break;
+            }
+            if (point3[j] != point1[j]) {
+                equal = false;
+                break;
+            }
+        }
+
+        if (equal) {
+            last_move = 0;
+        } else if (point3[1] < point1[1] && point3[0] > point1[0]) {
+            last_move = (point3[0] > point2[0]) ? -1 : 1;
+        } else if (point3[1] > point1[1] && point3[0] < point1[0]) {
+            last_move = (point3[0] == point2[0]) ? 1 : -1;
+        } else if (point3[1] < point1[1] && point3[0] < point1[0]) {
+            last_move = (point3[0] < point2[0]) ? 1 : -1;
+        } else if (point3[1] > point1[1] && point3[0] > point1[0]) {
+            last_move = (point3[0] == point2[0]) ? -1 : 1;
+        } else {
+            if (point3[1] == point1[1] && point3[0] > point1[0]) {
+                last_move = (point2[1] > point3[1]) ? 1 : -1;
+            } else if (point3[1] == point1[1] && point3[0] < point1[0]) {
+                last_move = (point2[1] > point3[1]) ? -1 : 1;
+            } else {
+                Rcpp::warning("Unexpected scenario");
+                last_move = NA_INTEGER;  // Use NA_INTEGER for NA in R
+            }
+        }
+
+        results[i - 2] = last_move;  // Store the result
+    }
+
+    return results;
+}
+')
 
 #' Returns the closest node to the provided coordinate
 #' 
@@ -193,6 +254,38 @@ NumericMatrix pdist(NumericMatrix A, NumericMatrix B) {
      
      return wrap(sqrt(C)); 
 }', c('Rcpp', 'RcppArmadillo'))
+
+
+#' Computes the pairwise euclidean distance between two sets of coordinates
+#' 
+#' @param vec A vector of directions with -1, 1 and 0 turns
+#' @return A vector of length
+Rcpp::cppFunction('
+NumericVector find_pl(NumericVector vec) {
+  std::vector<int> lengths;
+  int current_length = 0;
+  
+  // Iterate through the input vector
+  for (int i = 1; i < vec.size(); i++) {
+    // Check for alternating steps (-1 to 1 or 1 to -1)
+    if ((vec[i] == -1 && vec[i-1] == 1) || (vec[i] == 1 && vec[i-1] == -1)) {
+      current_length++;
+    } else {
+      if (current_length > 0) {
+        lengths.push_back(current_length + 1); // Add completed sequence
+      }
+      current_length = 0; // Reset for a new sequence
+    }
+  }
+  
+  // Check the last sequence
+  if (current_length > 0) {
+    lengths.push_back(current_length + 1);
+  }
+  
+  return NumericVector(lengths.begin(), lengths.end());
+}
+')
 
 nest_influence <- function(r = 101){
         idx <- inRadius(hex[, c('x', 'y')], as.numeric(hex[663, c('x', 'y')]), r)

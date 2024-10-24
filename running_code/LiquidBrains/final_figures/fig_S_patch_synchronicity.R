@@ -29,8 +29,9 @@ parallel_foraging <- function(path){
 			p2 <- 1:6
 		}
 		overlap <- max(txt[p1, t])-min(txt[p2, t])
+		p2_duration <- max(txt[p2, t]) + min(txt[p1, t])
 		sync <- sign(overlap)
-		data.frame(overlap = overlap, sync = sync, rho = rho, eps = eps)
+		data.frame(overlap = overlap / p2_duration, sync = sync, rho = rho, eps = eps)
 	}, mc.cores = 4L)
 	
 	rbindlist(l)[order(rho, eps)]
