@@ -54,8 +54,9 @@ subpanel_1 <- ggplot(data = stats_mlt[variable == 'v'],
 	scale_fill_manual('', labels = c('Experimental', 'Control'), 
 			  values = c('mediumpurple','gold3'))+
 	xlab('') +
-	scale_y_continuous(TeX("Velocity ($cm\\cdot s^{-1}$)"))+
-	theme(legend.position = c(0.15, 0.8), 
+	scale_y_continuous(TeX("Velocity ($cm\\cdot s^{-1}$)"),
+			   limits = c(0, NA))+
+	theme(legend.position = c(0.5, 0.8), # legend.position = c(0.15, 0.8), 
 	      legend.background = element_rect(color = 'black', fill = NA), 
 	      legend.justification = 'center', legend.title = element_blank(),
 	      plot.title = element_text(size = 22))
@@ -186,6 +187,27 @@ subpanel_5 <- ggplot(data = data_pl,
 	xlab('') +
 	scale_y_continuous(TeX('Directional persistence (steps)'))+
 	coord_cartesian(ylim = c(0, 7))
+
+panel_a <- (subpanel_1 + theme(axis.line.x = element_blank(),
+			      axis.text.x = element_blank(),
+			      axis.ticks.x = element_blank()) +
+subpanel_5+ theme(axis.line.x = element_blank(),
+		  axis.text.x = element_blank(),
+		  axis.ticks.x = element_blank())) /
+(subpanel_3+ subpanel_4)
+
+
+img <- png::readPNG('~/research/gits/AnTracks/plots/figures_LiquidBrains/fig_1_panel_b.png')
+g <- grid::rasterGrob(img, interpolate = TRUE)
+panel_b <- ggplot(data = data.frame(x = 1:10, y = 1:10)) + geom_blank() +
+	annotation_custom(g, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)+ theme_void()
+
+ggsave('~/research/gits/AnTracks/plots/figures_LiquidBrains/fig_1_panel_a.svg',
+       device = 'svg', width = 4500, height = 4500, dpi = 600, units = 'px')
+# svg('~/research/gits/AnTracks/plots/figures_LiquidBrains/fig_1_panel_a.svg', 
+#     8000, 8000, pointsize = 7)
+# panel_a
+dev.off()
 
 
 det_straight <- rbindlist(lapply(det, get_straightness), idcol = 'exp')
