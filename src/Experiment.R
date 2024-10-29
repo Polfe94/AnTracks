@@ -537,39 +537,78 @@ setMethod('get_straightness', 'Experiment', function(.Object, ...){
 #         result[result[['Time']] > 0, ]
 # })
 
+# setMethod('class_ids',
+#           'Experiment', # dists are the breakpoint between the two <distance> scales
+#           function(.Object, dists = list(det = 200, sto = NA, nf = 350)){
+#         
+#         if('type' %in% colnames(.Object@data)){
+#                 return(.Object)
+#         }
+#         
+#         setDT(.Object@data)
+#         .Object@data[['type']] <- 'UNKNOWN'
+#         
+#         # init max time and distance to classify ants
+#         maxd <- dists[[.Object@type]]
+#         if(length(.Object@food)){
+#                 maxt <- min(rbindlist(.Object@food)[['t']])
+#         } else {
+#                 maxt <- .Object@data[, max(Frame)]		
+#         }
+#         
+#         # subset data
+#         data <- setDT(.Object@data)[Frame <= maxt]
+#         data[['d']] <- as.numeric(pdist(as.matrix(data[, c('Xmm', 'Ymm')]), 
+#                                         as.matrix(hex[hex$node == 634, c('x', 'y')])))
+#         
+#         ids <- data[, unique(N_ind)]
+#         scouts <- unique(data[d > maxd, N_ind])
+#         recruits <- ids[!ids %in% scouts]
+#         
+#         .Object@data[N_ind %in% scouts, 'type'] <- 'Scout'
+#         .Object@data[N_ind %in% recruits, 'type'] <- 'Recruit'
+#         
+#         .Object
+# })
+
 setMethod('class_ids',
           'Experiment', # dists are the breakpoint between the two <distance> scales
           function(.Object, dists = list(det = 200, sto = NA, nf = 350)){
-        
-        if('type' %in% colnames(.Object@data)){
-                return(.Object)
-        }
-        
-        setDT(.Object@data)
-        .Object@data[['type']] <- 'UNKNOWN'
-        
-        # init max time and distance to classify ants
-        maxd <- dists[[.Object@type]]
-        if(length(.Object@food)){
-                maxt <- min(rbindlist(.Object@food)[['t']])
-        } else {
-                maxt <- .Object@data[, max(Frame)]		
-        }
-        
-        # subset data
-        data <- setDT(.Object@data)[Frame <= maxt]
-        data[['d']] <- as.numeric(pdist(as.matrix(data[, c('Xmm', 'Ymm')]), 
-                                        as.matrix(hex[hex$node == 634, c('x', 'y')])))
-        
-        ids <- data[, unique(N_ind)]
-        scouts <- unique(data[d > maxd, N_ind])
-        recruits <- ids[!ids %in% scouts]
-        
-        .Object@data[N_ind %in% scouts, 'type'] <- 'Scout'
-        .Object@data[N_ind %in% recruits, 'type'] <- 'Recruit'
-        
-        .Object
-})
+                  
+                  if('type' %in% colnames(.Object@data)){
+                          return(.Object)
+                  }
+                  
+                  setDT(.Object@data)
+                  .Object@data[['type']] <- 'UNKNOWN'
+                  
+                  # init max time and distance to classify ants
+                  maxd <- dists[[.Object@type]]
+                  if(length(.Object@food)){
+                          maxt <- min(rbindlist(.Object@food)[['t']])
+                  } else {
+                          maxt <- .Object@data[, max(Frame)]		
+                  }
+                  
+                  # subset data
+                  ids_filtered <- setDT(.Object@data)[Frame <= maxt, .N, by='N_ind'][N > 10, N_ind]
+                  
+                  data <- .Object@data[N_ind %in% ids_filtered]
+                  
+                  data[['d']] <- as.numeric(pdist(as.matrix(data[, c('Xmm', 'Ymm')]), 
+                                                  as.matrix(hex[hex$node == 634, c('x', 'y')])))
+                  
+                  ids <- data[, .(d = mean(d)), by = 'N_ind']
+                  scouts <- unique(ids[d > maxd, N_ind])
+                  recruits <- unique(ids[d <= maxd, N_ind])
+                  
+                  .Object@data[N_ind %in% scouts, 'type'] <- 'Scout'
+                  .Object@data[N_ind %in% recruits, 'type'] <- 'Recruit'
+                  
+                  .Object
+          })
+
+
 
 #### +++ VISUALIZATION METHODS +++ ####
 #' Draws the food patches
