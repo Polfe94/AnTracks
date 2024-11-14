@@ -5,6 +5,8 @@ load("/home/polfer/research/gits/AnTracks/results/results_sims_rho_eps.RData")
 result_LR <- data_sims_rho_eps[['LR']]
 result_SR <- data_sims_rho_eps[['SR']]
 
+library(patchwork)
+
 
 median_tp2 <- rbindlist(list(LR = enhance_land_res(result_LR[is.finite(tp2), .(tp2 = 1/median(tp2)),
 							     by = c('rho', 'eps')], xvar = 'rho', yvar = 'eps', 
@@ -22,13 +24,14 @@ a <- ggplot(data = median_tp2,
 			   labels = sapply(seq(0.0004, 0.0008, length.out = 5), function(i){
 			   	TeX(paste0(as.character(i*1000), '$\\cdot 10^{-3}$'))
 			   })) +
-	xlab(TeX('Proportion of LR'))+ylab('')+ 
+	xlab(TeX('Proportion of scouts'))+ylab('')+ 
 	theme(aspect.ratio = 1, strip.placement = 'outside', strip.background = element_blank(),
-	      legend.position = 'right', legend.key.height = unit(1.5, 'cm'))+
+	      legend.position = 'right', legend.key.height = unit(1.5, 'cm'),
+	      plot.title = element_text(size = 22))+
 	facet_wrap(~ factor(.id, levels = c('LR', 'SR')),
 		   strip.position = 'left', 
-		   labeller = as_labeller(c(SR = 'Social copying | SR', 
-		   			 LR = 'Social copying | LR')))+
+		   labeller = as_labeller(c(SR = 'Social copying | Recruits', 
+		   			 LR = 'Social copying | Scouts')))+
 	guides(fill = guide_colorbar(title.position = 'top', title.hjust = 0.5))+
 	ggtitle('A')
 
@@ -55,17 +58,20 @@ b <- ggplot(data = median_total,
 			   	}
 			   	
 			   })) +
-	xlab(TeX('Proportion of LR'))+ylab('')+ 
+	xlab(TeX('Proportion of scouts'))+ylab('')+ 
 	theme(aspect.ratio = 1, strip.placement = 'outside', strip.background = element_blank(),
-	      legend.position = 'right', legend.key.height = unit(1.5, 'cm'),
+	      legend.position = 'right', legend.key.height = unit(1.5, 'cm'), 
+	      plot.title = element_text(size = 22)
 	)+
 	facet_wrap(~ factor(.id, levels = c('LR', 'SR')),
 		   strip.position = 'left', 
-		   labeller = as_labeller(c(SR = 'Social copying | SR', 
-		   			 LR = 'Social copying | LR')))+
+		   labeller = as_labeller(c(SR = 'Social copying | Recruits', 
+		   			 LR = 'Social copying | Scouts')))+
 	guides(fill = guide_colorbar(title.position = 'top', title.hjust = 0.5))+
 	ggtitle('B')
 
+
+a / b
 
 png('/home/polfer/research/gits/AnTracks/plots/figures_LiquidBrains/Fig_suppl_heatmaps.png', 4400,4000, res = 460)
 grid.arrange(a, b, nrow = 2, ncol = 1)

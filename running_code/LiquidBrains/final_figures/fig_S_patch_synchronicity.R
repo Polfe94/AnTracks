@@ -1,10 +1,8 @@
 source('~/research/gits/AnTracks/src/Experiment.R')
 source('~/research/gits/AnTracks/src/Simulation.R')
-source('~/research/gits/AnTracks/src/fit_functions.R')
-# load('~/research/gits/AnTracks/data/nf.RData')
-# load('~/research/gits/AnTracks/data/det.RData')
 
 library(parallel)
+library(patchwork)
 
 path <- '/home/polfer/research/gits/AutomatAnts/results/2024/both_no_listen/'
 files <- list.files(path)
@@ -50,23 +48,30 @@ sync_hd <- enhance_land_res(land = result[sync > 0, .(sync = sum(sync, na.rm = T
 
 
 
-ggplot(data = overlap_hd,
-       aes(rho, eps, fill = overlap / 60)) +
-	geom_raster() + geom_contour(linetype = 4, aes(z = overlap), color = 'grey5') +
-	scale_fill_viridis(TeX('Synchronicity duration (min)'), 
-			   option = 'C')+
-	xlab('Proportion of scouts') + ylab ('Social copying')+
-	theme(aspect.ratio = 1, legend.position = 'top', 
-			    legend.key.width = unit(1.4, 'cm'))+
-	guides(fill = guide_colorbar(title.position = 'top', title.hjust = 0.5))
-
-
 ggplot(data = sync_hd,
-       aes(rho, eps, fill = sync)) +
+       aes(rho, eps, fill = sync /100)) +
 	geom_raster() + geom_contour(linetype = 4, aes(z = sync), color = 'grey5') +
-	scale_fill_viridis(TeX('Patch synchronicity (%)'), 
+	scale_fill_viridis(TeX('Probability'), 
 			   option = 'C')+
 	xlab('Proportion of scouts') + ylab ('Social copying')+
 	theme(aspect.ratio = 1, legend.position = 'top', 
-	      legend.key.width = unit(1.4, 'cm'))+
-	guides(fill = guide_colorbar(title.position = 'top', title.hjust = 0.5))
+	      legend.key.width = unit(1.4, 'cm'),
+	      plot.title = element_text(hjust = -0.125, vjust = -2, size = 22))+
+	guides(fill = guide_colorbar(title.position = 'top', title.hjust = 0.5))+
+	ggtitle('A')+
+
+
+ggplot(data = overlap_hd,
+       aes(rho, eps, fill = overlap *100)) +
+	geom_raster() + geom_contour(linetype = 4, aes(z = overlap), color = 'grey5') +
+	scale_fill_viridis(TeX('Relative overlap (%)'), 
+			   option = 'C')+
+	xlab('Proportion of scouts') + ylab ('Social copying')+
+	theme(aspect.ratio = 1, legend.position = 'top', 
+			    legend.key.width = unit(1.4, 'cm'),
+	      plot.title = element_text(hjust = -0.125,vjust = -2, size = 22))+
+	guides(fill = guide_colorbar(title.position = 'top', title.hjust = 0.5))+
+	ggtitle('B')
+
+
+

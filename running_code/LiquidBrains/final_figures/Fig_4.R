@@ -2,19 +2,21 @@ source('~/research/gits/AnTracks/src/Experiment.R')
 source('~/research/gits/AnTracks/src/Simulation.R')
 load('~/research/gits/AnTracks/data/det.RData')
 
-load("/home/polfer/research/gits/AnTracks/results/results_sims_rho_eps.RData")
-result_both <- data_sims_rho_eps[['both']]
+load("/home/polfer/research/gits/AnTracks/results/rho_eps.RData")
+
+# load("/home/polfer/research/gits/AnTracks/results/results_sims_rho_eps.RData")
+# result_both <- data_sims_rho_eps[['both']]
 
 ## Enhance landscape resolution
 median_total <- enhance_land_res(result_both[, .(z = 1/median((tp1 +tp2))),
 					     by = c('rho', 'eps')], xvar = 'rho', yvar = 'eps', 
-				 zvar = 'z', spar = 0.5, n = 200)
+				 zvar = 'z', spar = 1, n = 200)
 median_tp1 <- enhance_land_res(result_both[is.finite(tp1), .(z = 1/median(tp1)),
 					   by = c('rho', 'eps')], xvar = 'rho', yvar = 'eps', 
-					   zvar = 'z', spar = 0.5, n = 200)
+					   zvar = 'z', spar = 1, n = 200)
 median_tp2 <- enhance_land_res(result_both[is.finite(tp2), .(z = 1/median(tp2)),
 					   by = c('rho', 'eps')], xvar = 'rho', yvar = 'eps', 
-					   zvar = 'z', spar = 0.5, n = 200)
+					   zvar = 'z', spar = 1, n = 200)
 
 ## Empirical data
 det_tps <- rbindlist(lapply(det, function(i){
@@ -53,29 +55,33 @@ ggplot(data = median_tp1,
 			   		function(i){
 			   			TeX(paste0(as.character(i*1000)))
 			   		}))+
-	xlab('Proportion of LR') + ylab ('Social copying')+
+	xlab('Proportion of scouts') + ylab ('Social copying')+
 	ggtitle('A')+ theme(aspect.ratio = 1, legend.position = 'top', 
-			    legend.key.width = unit(1.4, 'cm'))+
+			    legend.key.width = unit(1.4, 'cm'),
+			    plot.title = element_text(size = 22, hjust = -0.15,
+			    			  vjust = -2))+
 	guides(fill = guide_colorbar(title.position = 'top', title.hjust = 0.5))+
 	geom_point(data = poly_tp1, 
-		   aes(x, y), color = 'white', fill = NA, size = 0.3),
+		   aes(x, y), color = 'white', fill = NA, size = 0.35),
 
 ggplot(data = median_tp2,
        aes(rho, eps, fill = z)) +
 	geom_raster() + geom_contour(linetype = 4, aes(z = z), color = 'grey5') +
 	scale_fill_viridis(TeX('Exploitation efficiency ($10^{3} s^{-1}$)'), 
 			   option = 'C',
-			   breaks = seq(0.00045, 0.00065, length.out = 5),
-			   labels = sapply(seq(0.00045, 0.00065, length.out = 5), 
+			   breaks = seq(0.0004, 0.0008, 0.0001),
+			   labels = sapply(seq(0.0004, 0.0008, 0.0001), 
 			   		function(i){
 			   			TeX(paste0(as.character(i*1000)))
 			   		}))+
-	xlab('Proportion of LR') + ylab ('Social copying')+
+	xlab('Proportion of scouts') + ylab ('Social copying')+
 	ggtitle('B') + theme(aspect.ratio = 1, legend.position = 'top', 
-			     legend.key.width = unit(1.4, 'cm'))+
+			     legend.key.width = unit(1.4, 'cm'),
+			     plot.title = element_text(size = 22, hjust = -0.15,
+			     			  vjust = -2))+
 	guides(fill = guide_colorbar(title.position = 'top', title.hjust = 0.5))+ 
 	geom_point(data = poly_tp2, 
-		   aes(x, y), color = 'white', fill = NA, size = 0.3),
+		   aes(x, y), color = 'white', fill = NA, size = 0.35),
 ggplot(data = median_total,
        aes(rho, eps, fill = z)) +
 	geom_raster() + geom_contour(linetype = 4, aes(z = z), color = 'grey5') +
@@ -86,12 +92,14 @@ ggplot(data = median_total,
 			   		function(i){
 			   			TeX(paste0(as.character(i*1000)))
 			   		}))+
-	xlab('Proportion of LR') + ylab ('Social copying')+
+	xlab('Proportion of scouts') + ylab ('Social copying')+
 	ggtitle('C')+ theme(aspect.ratio = 1, legend.position = 'top', 
-			    legend.key.width = unit(1.4, 'cm'))+
+			    legend.key.width = unit(1.4, 'cm'),
+			    plot.title = element_text(size = 22, hjust = -0.15,
+			    			  vjust = -2))+
 	guides(fill = guide_colorbar(title.position = 'top', title.hjust = 0.5))+ 
 	geom_point(data = poly_total, 
-		   aes(x, y), color = 'white', fill = NA, size = 0.3),
+		   aes(x, y), color = 'white', fill = NA, size = 0.35),
 ncol = 3, nrow = 1)
 
 
