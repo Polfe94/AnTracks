@@ -89,7 +89,7 @@ draw_traffic_flow <- function(edges = NULL, add = NULL, ...){
 }
 
 geom_circle <- function(center, r, npoints = 100, ...){
-     sq <- seq(0, 2*pi, length.out = npoints)
+     sq <- seq(0, 2* pi, length.out = npoints)
      if(is.data.frame(center)){
           
           if(nrow(center) == 1){
@@ -117,6 +117,37 @@ geom_circle <- function(center, r, npoints = 100, ...){
           stop('Please use a data.frame or an atomic vector of length two for the center')
      }
      
+}
+
+geom_arc <- function(center, r, npoints = 100, start = 0, end = 2, ...){
+        sq <- seq(start * pi, end * pi, length.out = npoints)
+        if(is.data.frame(center)){
+                
+                if(nrow(center) == 1){
+                        x <- c(center[, 1], center[, 1] + r * cos(sq), center[, 1])
+                        y <- c(center[, 2], center[, 2] + r * sin(sq), center[, 2])
+                        geom_polygon(data = data.frame(x = x, y = y), aes(x, y), ...)
+                } else {
+                        x <- c()
+                        y <- c()
+                        g <- c()
+                        for(i in seq_len(nrow(center))){
+                                x <- c(x, center[i, 1] + r * cos(sq))
+                                y <- c(y, center[i, 2] + r * sin(sq))
+                                g <- c(g, rep(i, npoints))
+                        }
+                        geom_polygon(data = data.frame(x = x, y = y, g = g), aes(x, y, group = factor(g)), ...)
+                }
+                
+        } else if (is.atomic(center) && length(center) == 2){
+                
+                geom_polygon(data = data.frame(x = center[1] + r * cos(sq),
+                                            y = center[2] + r * sin(sq)),
+                          aes(x, y, group = factor(g)), ...)
+        } else {
+                stop('Please use a data.frame or an atomic vector of length two for the center')
+        }
+        
 }
 
 geom_foodpatches <- function(food = NULL, add = NULL, ...){

@@ -507,10 +507,10 @@ M2sbst <- function(M, t){
      sbst
 }
 
-get_neighbors <- function(nodes, edges = edges){
-
-        neighbors <- unique(unlist(edges[edges$o %in% nodes | edges$d %in% nodes, c('o', 'd')]))
+get_neighbors <- function(nodes, .edges = edges){
+        neighbors <- unique(unlist(.edges[.edges$o %in% nodes | .edges$d %in% nodes, c('o', 'd')]))
         neighbors[!neighbors %in% nodes]
+        
 }
 
 optimal_path <- function(start, target, refcoords = hex[hex$y > 1000, ], r = 51){
