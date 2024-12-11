@@ -27,9 +27,9 @@ draw_hexagons(size = 1.2, color = 'grey50') +
         geom_arc(hex[hex$node == node_2[1], c('x', 'y')], r = 23, npoints = 300, size = 1.3, start =  -1.3, end = -1.83,
                  fill = 'grey50', color = 'black', alpha = 0.5)+
         
-        geom_text(data = data.frame(x = c(785, 782, 808), y = c(1434, 1460, 1468),
+        geom_text(data = data.frame(x = c(785, 777, 808), y = c(1430, 1464, 1470),
                                     label = c('$\\alpha_{1}$', '$\\alpha_{2}$', '$\\alpha_{3}$')),
-                  aes(x, y, label = lapply(label, TeX, output = 'character')), parse = TRUE,size = 6)+
+                  aes(x, y, label = lapply(label, TeX, output = 'character')), parse = TRUE,size = 13)+
         
         
         geom_arc(hex[hex$node == node_1[1], c('x', 'y')], r = 19, npoints = 300, size = 1.3, start = -0.83, end = -0.57,
@@ -41,9 +41,9 @@ draw_hexagons(size = 1.2, color = 'grey50') +
         
         
         
-        geom_text(data = data.frame(x = c(903, 873, 875), y = c(1512, 1550, 1520),
+        geom_text(data = data.frame(x = c(905, 870, 873), y = c(1509, 1550, 1518),
                                     label = c('$\\alpha_{1}$', '$\\alpha_{3}$', '$\\alpha_{2}$')),
-                  aes(x, y, label = lapply(label, TeX, output = 'character')), parse = TRUE,size = 6)+
+                  aes(x, y, label = lapply(label, TeX, output = 'character')), parse = TRUE,size = 13)+
         
         # geom_arc(hex[hex$node == node_1[1], c('x', 'y')], r = 5, npoints = 300, size = 1.3, start = -0.5, end = -1.14,
         #          fill = NA, color = 'black')+
