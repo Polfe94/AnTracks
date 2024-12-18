@@ -61,23 +61,24 @@ pred_ <- lapply(seq_along(xv), function(i) predict(smodels[[i]],
 						   newdata = data.frame(x = xv[[i]])))
 
 
-ggplot(data = fit_data, aes(x, y)) + 
+ggplot(data = fit_data, aes(x, y, fill = tag)) + 
 
 	scale_x_continuous('Average distance to nest (cm)', breaks = seq(0, 140, 10))+
 	# scale_y_continuous() # seems single exponential
-	scale_y_log10('Frequency')+ # reveals a double exponential+
-	facet_wrap(~tag, scales = 'free')+
+	scale_y_log10('Frequency (log-scale)')+ # reveals a double exponential+
+	facet_wrap(~factor(tag, labels = c('Experimental (Food)', 'Control (No-Food)')),
+		   scales = 'free')+
 	geom_line(data = data.frame(x = unlist(xv),
 				    y = exp(unlist(pred_)),
 				    tag = c(rep('DET', length(xv[[1]])),
 				    	rep('NFD', length(xv[[1]])))),
-		  aes(x, y))+
+		  aes(x, y), size = 1)+
 	annotation_logticks(sides = 'l')+
 	geom_vline(data = data.frame(x = breakpoints,
 				     tag = c('DET', 'NFD')),
-		   linetype = 2, aes(xintercept = x))+
-geom_point(size = 4.5, shape = 1) 
-
+		   linetype = 2, aes(xintercept = x), size = 1)+
+geom_point(size = 4.5, shape = 21, show.legend = FALSE, alpha = 0.6)+
+	scale_fill_manual('', values = c('mediumpurple','gold3'))
 
 
 

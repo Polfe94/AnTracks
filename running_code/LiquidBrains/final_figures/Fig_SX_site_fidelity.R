@@ -73,7 +73,7 @@ dev.off()
 
 
 
-
+## PDF DEVICE 5 X 12 INCHES
 ggplot(data = rbindlist(list(det = general_det,
 			     nf = general_nf), idcol = 'condition'), aes(d)) +
 	# geom_line(stat = 'density', size = 1, aes(fill = type))
@@ -88,7 +88,7 @@ ggplot(data = rbindlist(list(det = general_det,
 			   labels = seq(0, ceiling(general_nf[, max(d)] / 100) * 100, bin_res*4)/10)+
 	ylab('Density')+
 	facet_wrap(~ factor(condition, 
-			    labels = c('Experimental', 'Control')))+
+			    labels = c('Experimental (Food)', 'Control (No-Food')))+
 	scale_fill_viridis_d('', direction = -1, end = 0.85) +
 	scale_color_viridis_d('', direction = -1, end = 0.85)  +
 	theme(aspect.ratio = 0.75, 

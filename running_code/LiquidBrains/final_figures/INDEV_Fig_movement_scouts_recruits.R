@@ -44,11 +44,11 @@ subpanel_1 <- ggplot(data = stats_mlt[variable == 'v'],
 		         value, fill = exp)) + 
 	
 	geom_boxplot(alpha = 0.6, outlier.shape = 1)+
-	annotate('text', x = 0.81 - 0.1, y = 2.25, label = 'a', size = 12) +
-	annotate('text', x = 1.19 - 0.1, y = 2.25, label = 'a', size = 12) +
-	annotate('text', x = 1.81 - 0.1, y = 2.25, label = 'b', size = 12) +
-	annotate('text', x = 2.19 - 0.1, y = 2.25, label = 'c', size = 12) +
-	scale_fill_manual('', labels = c('Experimental', 'Control'), 
+	annotate('text', x = 0.81 - 0.15, y = 2.25, label = 'a', size = 10) +
+	annotate('text', x = 1.19 - 0.15, y = 2.25, label = 'a', size = 10) +
+	annotate('text', x = 1.81 - 0.15, y = 2.25, label = 'b', size = 10) +
+	annotate('text', x = 2.19 - 0.15, y = 2.25, label = 'c', size = 10) +
+	scale_fill_manual('', labels = c('Food', 'No-Food'), 
 			  values = c('mediumpurple','gold3'))+
 	xlab('') +
 	scale_y_continuous(TeX("Velocity ($cm\\cdot s^{-1}$)"),
@@ -69,10 +69,10 @@ subpanel_3 <- ggplot(data = stats_mlt[variable == 'd'],
 		         value, fill = exp)) + 
 	
 	geom_boxplot(alpha = 0.6, outlier.shape = 1, show.legend = FALSE)+
-	annotate('text', x = 0.81 - 0.1, y = 140, label = 'a', size = 12) +
-	annotate('text', x = 1.19 - 0.1, y = 140, label = 'b', size = 12) +
-	annotate('text', x = 1.81 - 0.1, y = 140, label = 'c', size = 12) +
-	annotate('text', x = 2.19 - 0.1, y = 140, label = 'c', size = 12) +
+	annotate('text', x = 0.81 - 0.15, y = 140, label = 'a', size = 10) +
+	annotate('text', x = 1.19 - 0.15, y = 140, label = 'b', size = 10) +
+	annotate('text', x = 1.81 - 0.15, y = 140, label = 'c', size = 10) +
+	annotate('text', x = 2.19 - 0.15, y = 140, label = 'c', size = 10) +
 	scale_fill_manual('', labels = c('Experimental', 'Control'), 
 			  values = c('mediumpurple','gold3'))+
 	xlab('') +
@@ -93,10 +93,10 @@ subpanel_4 <- ggplot(data = stats_mlt[variable == 't'],
 		         value, fill = exp)) + 
 	
 	geom_boxplot(alpha = 0.6, outlier.shape = 1, show.legend = FALSE)+
-	annotate('text', x = 0.81 - 0.1, y = 18, label = 'a', size = 12) +
-	annotate('text', x = 1.19 - 0.1, y = 18, label = 'b', size = 12) +
-	annotate('text', x = 1.81 - 0.1, y = 18, label = 'c', size = 12) +
-	annotate('text', x = 2.19 - 0.1, y = 18, label = 'c', size = 12) +
+	annotate('text', x = 0.81 - 0.15, y = 18, label = 'a', size = 10) +
+	annotate('text', x = 1.19 - 0.15, y = 18, label = 'b', size = 10) +
+	annotate('text', x = 1.81 - 0.15, y = 18, label = 'c', size = 10) +
+	annotate('text', x = 2.19 - 0.15, y = 18, label = 'c', size = 10) +
 	scale_fill_manual('', labels = c('Experimental', 'Control'), 
 			  values = c('mediumpurple','gold3'))+
 	xlab('') +
@@ -146,10 +146,10 @@ subpanel_5 <- ggplot(data = data_pl,
            pl, fill = condition)) + 
 	
 	geom_boxplot(alpha = 0.6, outlier.shape = 1, show.legend = FALSE)+
-	annotate('text', x = 0.81 - 0.1, y = 6, label = 'a', size = 12) +
-	annotate('text', x = 1.19 - 0.1, y = 6, label = 'b', size = 12) +
-	annotate('text', x = 1.81 - 0.1, y = 6, label = 'c', size = 12) +
-	annotate('text', x = 2.19 - 0.1, y = 6, label = 'd', size = 12) +
+	annotate('text', x = 0.81 - 0.15, y = 6, label = 'a', size = 10) +
+	annotate('text', x = 1.19 - 0.15, y = 6, label = 'b', size = 10) +
+	annotate('text', x = 1.81 - 0.15, y = 6, label = 'c', size = 10) +
+	annotate('text', x = 2.19 - 0.15, y = 6, label = 'd', size = 10) +
 	scale_fill_manual('', labels = c('Experimental', 'Control'), 
 			  values = c('mediumpurple','gold3'))+
 	xlab('') +
@@ -227,7 +227,8 @@ panel_c_1 <- draw_traffic_flow(traffic_flow[type == 'Scout' & condition == 'DET'
 		    r = 200, npoints = 500, linetype = 2, linewidth = 0.95) +
 	scale_y_continuous(limits = c(1000, 1950)) + 
 	geom_point(shape = 23, data = hex[hex$node == 634, c('x', 'y')], aes(x, y-10),
-		   fill = 'purple3', size = 4)
+		   fill = 'purple3', size = 4)+
+	ggtitle('Scouts (Food)') + theme(plot.title = element_text(hjust = 0.5, vjust = -4))
 
 panel_c_2 <- draw_traffic_flow(traffic_flow[type == 'Recruit' & condition == 'DET'], lineend = 'round',
 			       add = draw_hexagons(linewidth = 1, color = 'grey80', lineend = 'round',
@@ -240,7 +241,8 @@ panel_c_2 <- draw_traffic_flow(traffic_flow[type == 'Recruit' & condition == 'DE
 		    r = 200, npoints = 500, linetype = 2, linewidth = 0.95) +
 	scale_y_continuous(limits = c(1000, 1950)) + 
 	geom_point(shape = 23, data = hex[hex$node == 634, c('x', 'y')], aes(x, y-10),
-		   fill = 'purple3', size = 4)
+		   fill = 'purple3', size = 4)+
+ggtitle('Recruits (Food)') + theme(plot.title = element_text(hjust = 0.5, vjust = -4))
 
 panel_c_3 <- draw_traffic_flow(traffic_flow[type == 'Scout' & condition == 'NFD'], lineend = 'round',
 			       add = draw_hexagons(linewidth = 1, color = 'grey80', lineend = 'round',
@@ -253,7 +255,9 @@ panel_c_3 <- draw_traffic_flow(traffic_flow[type == 'Scout' & condition == 'NFD'
 		    r = 350, npoints = 500, linetype = 2, linewidth = 0.95) +
 	scale_y_continuous(limits = c(1000, 1950)) + 
 	geom_point(shape = 23, data = hex[hex$node == 634, c('x', 'y')], aes(x, y-10),
-		   fill = 'purple3', size = 4)
+		   fill = 'purple3', size = 4)+
+	
+	ggtitle('Scouts (No-Food)') + theme(plot.title = element_text(hjust = 0.5, vjust = -4))
 
 panel_c_4 <- draw_traffic_flow(traffic_flow[type == 'Recruit' & condition == 'NFD' & N > 11], lineend = 'round',
 			       add = draw_hexagons(linewidth = 1, color = 'grey80', lineend = 'round',
@@ -266,29 +270,45 @@ panel_c_4 <- draw_traffic_flow(traffic_flow[type == 'Recruit' & condition == 'NF
 		    r = 350, npoints = 500, linetype = 2, linewidth = 0.95) +
 	scale_y_continuous(limits = c(1000, 1950)) + 
 	geom_point(shape = 23, data = hex[hex$node == 634, c('x', 'y')], aes(x, y-10),
-		   fill = 'purple3', size = 4)
+		   fill = 'purple3', size = 4)+
+	
+	ggtitle('Recruits (No-Food)') + theme(plot.title = element_text(hjust = 0.5, vjust = -4))
 
-grid.arrange(ggarrange(subpanel_1+ theme(axis.line.x = element_blank(),
-					 axis.text.x = element_blank(),
-					 axis.ticks.x = element_blank()), 
-					 subpanel_5+ theme(axis.line.x = element_blank(),
-					 		  axis.text.x = element_blank(),
-					 		  axis.ticks.x = element_blank()),
-		       subpanel_3, subpanel_4), panel_c_1, panel_c_2, panel_c_3, panel_c_4,
-	     layout_matrix = rbind(c(1, 1, 2, 2),
-	     		      c(1, 1, 2, 2),
-	     		      c(1, 1, 3, 3),
-	     		      c(1, 1,  3, 3),
-	     		      c(NA, NA, 4, 4),
-	     		      c(NA, NA, 4, 4),
-	     		      c(NA, NA, 5, 5),
-	     		      c(NA, NA, 5, 5)))
 
-panel_a <- (subpanel_1 + theme(axis.line.x = element_blank(),
-			       axis.text.x = element_blank(),
-			       axis.ticks.x = element_blank()) +
-	    	subpanel_5+ theme(axis.line.x = element_blank(),
-	    			  axis.text.x = element_blank(),
-	    			  axis.ticks.x = element_blank())) /
-	(subpanel_3+ subpanel_4)
+panel_legend <- cowplot::get_legend(draw_traffic_flow(traffic_flow[type == 'Scout' & condition == 'NFD'], lineend = 'round')+
+				    	scico::scale_color_scico('Density',
+				    				 breaks = c(97, 2580), 
+				    				 labels = c('Low', 'High')) +
+				    	theme(legend.position = 'bottom',
+				    	      legend.key.width = unit(1.5, 'cm'))+
+				    	guides(color = guide_colorbar(title.position = 'top',
+				    				      title.hjust = 0.5)))
+grid::grid.newpage()
+
+
+grid::grid.draw(panel_legend)
+# 
+# grid.arrange(ggarrange(subpanel_1+ theme(axis.line.x = element_blank(),
+# 					 axis.text.x = element_blank(),
+# 					 axis.ticks.x = element_blank()), 
+# 					 subpanel_5+ theme(axis.line.x = element_blank(),
+# 					 		  axis.text.x = element_blank(),
+# 					 		  axis.ticks.x = element_blank()),
+# 		       subpanel_3, subpanel_4), panel_c_1, panel_c_2, panel_c_3, panel_c_4,
+# 	     layout_matrix = rbind(c(1, 1, 2, 2),
+# 	     		      c(1, 1, 2, 2),
+# 	     		      c(1, 1, 3, 3),
+# 	     		      c(1, 1,  3, 3),
+# 	     		      c(NA, NA, 4, 4),
+# 	     		      c(NA, NA, 4, 4),
+# 	     		      c(NA, NA, 5, 5),
+# 	     		      c(NA, NA, 5, 5)))
+# 
+# panel_a <- (subpanel_1 + theme(axis.line.x = element_blank(),
+# 			       axis.text.x = element_blank(),
+# 			       axis.ticks.x = element_blank()) +
+# 	    	subpanel_5+ theme(axis.line.x = element_blank(),
+# 	    			  axis.text.x = element_blank(),
+# 	    			  axis.ticks.x = element_blank())) /
+# 	(subpanel_3+ subpanel_4)
 
