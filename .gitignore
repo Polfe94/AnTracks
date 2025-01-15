@@ -1,3 +1,6 @@
-/data
-/results
-/plots
+backup_src/
+2018/data/
+2018/results/
+2024/data/
+2024/results/
+.Rhistory
